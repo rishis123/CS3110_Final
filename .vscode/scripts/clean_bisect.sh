@@ -1,0 +1,1 @@
+find .. -name '*.coverage' | xargs rm -f

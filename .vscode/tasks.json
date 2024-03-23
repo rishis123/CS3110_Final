@@ -1,0 +1,97 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run FinalProject",
+            "type": "shell",
+            "command": "dune",
+            "args": ["exec", "FinalProject"],
+            "problemMatcher": [
+                "$ocamlc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "run tests",
+            "type": "shell",
+            "command": "dune",
+            "args": ["test", "--instrument-with", "bisect_ppx", "--force"],
+            "problemMatcher": [
+                "$ocamlc"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "html tests",
+            "type": "shell",
+            "command": "bisect-ppx-report",
+            "args": ["html"],
+            "problemMatcher": [
+                "$ocamlc"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "dependsOn": ["run tests"]
+        },
+        {
+            "label": "clean bisect",
+            "type": "shell",
+            "command": ".vscode/scripts/clean_bisect.sh",
+            "args": []
+        },
+        {
+            "label": "run tests",
+            "type": "shell",
+            "command": "dune",
+            "args": ["test", "--instrument-with", "bisect_ppx", "--force"],
+            "problemMatcher": [
+                "$ocamlc"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "dependsOn": ["clean bisect"]
+        }
+    ]
+}
