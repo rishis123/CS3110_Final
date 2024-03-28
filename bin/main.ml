@@ -20,6 +20,14 @@ let rec logged_in_loop () =
           print_endline (FinalProject.Serialization.encryptable_to_string x))
         pwd_list;
       logged_in_loop ()
+  | "add" ->
+      print_endline "Type a new password:";
+      let pwd = read_line () in
+      let encryptable =
+        FinalProject.Types.Password { name = ""; password = pwd }
+      in
+      FinalProject.Persistence.write_encryptable encryptable;
+      logged_in_loop ()
   | _ ->
       print_endline "That is not a valid command.";
       logged_in_loop ()
@@ -40,3 +48,5 @@ let rec main_loop () =
   | _ ->
       print_endline "That is not a valid command.";
       main_loop ()
+
+let _ = main_loop () ()
