@@ -1,0 +1,43 @@
+---
+group:
+  - name: Zhijia Ye
+    netid: zy424
+  - name: Rohen Giralt
+    netid: rmg296
+  - name: Sophia Song
+    netid: ss3579
+  - name: Rishi Shah
+    netid: rrs244
+  - name: Lakshmi Meghana Kesanapalli
+    netid: lk496
+pm:
+  name: Jonathan Ma
+  netid: jjm498
+publish: true
+# Pithy title
+title: "Final Projectors Password Manager"
+# OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
+git-repo: "https://github.coecis.cornell.edu/rmg296/CS3110-FinalProject"
+# If you have no demo screencast, replace the url string with an empty string ""
+demo-video-url: ""
+# Write a short, attention-grabbing description of your project.
+desc: >
+  Have you ever forgotten a password? Mixed up your login for Netflix and Amazon?
+  Found yourself lost in a sea of "Enter your mother's maiden name" and "What was the name of your first pet"?
+  Annoyed trying to find yet another different special character?
+  Look no further than Final Projectors Password Manager. 
+  
+  Our console and GUI* application can set, load, store and update 
+  any number of passwords your heart may desire.
+  Our easy-to-use interface gets your passwords copied and you logged in,
+  all with breathtaking efficiency.
+  When our application is not running, your passwords are secure.
+  All data is encrypted at rest using NSA-grade cryptography**, 
+  meaning none of your logins or passwords can be read 
+  without your master password - not even by us.
+  Enjoy all the luxuries of the modern day with backups and synchronization
+  across devices*, meaning you'll never leave your passwords at home.
+  
+  * To be potentially added later.
+  ** The NSA uses the same cryptography as everyone else.
+  
