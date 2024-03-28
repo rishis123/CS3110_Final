@@ -10,6 +10,6 @@ $ opam update
 $ opam upgrade
 $ opam install batteries ppx_inline_test
 
-Then, you can build and run the project with the following commands:
+Then, you can build and run the project with the following commands. Make sure you have changed directory to be in the project's root directory (the project root is the folder containing this INSTALL.md file).
 $ dune build
 $ dune exec bin/main.exe
