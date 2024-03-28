@@ -1,7 +1,7 @@
 let masterpwd_filename = "masterpwd"
 let pwd_filename = "pwd"
 
-let read_master_password_hash =
+let read_master_password_hash () =
   let lines =
     BatList.of_enum (BatFile.lines_of ("data/" ^ masterpwd_filename))
   in
@@ -10,7 +10,7 @@ let read_master_password_hash =
 
 let write_unencryptable _ = failwith "Not implemented"
 
-let read_all_encryptable =
+let read_all_encryptable () =
   let lines =
     BatList.of_enum (BatFile.lines_of ("data/" ^ masterpwd_filename))
   in
