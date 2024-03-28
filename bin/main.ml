@@ -12,7 +12,7 @@ let rec logged_in_loop () =
   print_endline "Type a command:";
   let input = read_line () in
   match input with
-  | "quit" -> quit_procedure
+  | "quit" -> quit_procedure ()
   | "list" ->
       let pwd_list = FinalProject.Persistence.read_all_encryptable () in
       List.iter
@@ -40,7 +40,10 @@ let rec main_loop () =
   | "login" -> begin
       print_endline "Type your master password:";
       let pwd = read_line () in
-      if login_procedure pwd then logged_in_loop ()
+      if login_procedure pwd then begin
+        print_endline "Logged in!";
+        logged_in_loop ()
+      end
       else
         let () = print_endline "The password does not match" in
         main_loop ()
@@ -49,4 +52,4 @@ let rec main_loop () =
       print_endline "That is not a valid command.";
       main_loop ()
 
-let _ = main_loop () ()
+let _ = main_loop ()
