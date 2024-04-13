@@ -23,3 +23,4 @@ let write_encryptable encryptable =
       in
       let new_stuff = BatList.enum (BatList.cons line original) in
       BatFile.write_lines ("data/" ^ pwd_filename) new_stuff
+  | Types.Login _ -> failwith "Not implemented yet"
