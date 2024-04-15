@@ -1,0 +1,143 @@
+commit 6679c13ad1773259ad93df839468caaa1d42b739
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Thu Mar 28 19:07:29 2024 -0400
+
+    Update INSTALL.md
+
+commit 6dff6b5ea82582e4f4b72bb469cc9237d2e195bc
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Thu Mar 28 18:58:19 2024 -0400
+
+    Add dependency to INSTALL.md
+
+commit b56e0cff685beb9cb22222b606c442b83f0efcd0
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Thu Mar 28 18:56:03 2024 -0400
+
+    Write INSTALL.md
+
+commit ce3123383cda9d97cde998e3593b588ca04679bc
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Thu Mar 28 18:34:11 2024 -0400
+
+    Added gallery file
+
+commit eafaae3ddd8b2c424ed3406a65ebcd0bd4b8d1d5
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Thu Mar 28 18:10:26 2024 -0400
+
+    Enhance feedback + fix quit procedure after logged in
+
+commit 6f6b99f73fe943b0deeae5f7f1014d62f17dced5
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Thu Mar 28 17:02:12 2024 -0400
+
+    Implement adding passwords in main
+    
+    - Fixed bug in listing passwords
+
+commit 0aabd87b4f93051753f44257e2cc85b9565bc0cd
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Thu Mar 28 16:23:29 2024 -0400
+
+    Implement masterPassword and main
+
+commit 1de2c7d7e92a1c87598489ed6af27c0820c3e8df
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Thu Mar 28 15:58:41 2024 -0400
+
+    Implement Encrypt and Persistence
+
+commit 57ea42ebe7401fa72b0bd603c6638f6caee9d232
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Sat Mar 23 23:47:12 2024 -0400
+
+    Implement Serialization
+
+commit d54334c22c5818afeef7c9b9e5a53af7f2e9953b
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Sat Mar 23 18:11:56 2024 -0400
+
+    Updated .gitignore
+
+commit b5686c142f23510172ef74bd8eeb6a5e20286a25
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Sat Mar 23 18:10:43 2024 -0400
+
+    Added VSCode configuration files
+
+commit 10c0a754ffa01294e7eaca98d9de5eb333603278
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Sat Mar 23 18:07:23 2024 -0400
+
+    Added .ocamlformat
+
+commit 5f106fcd28c8a81321b22792c0fe744fa90a9391
+Merge: 1fa478a 8cc6c41
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Sat Mar 23 18:05:32 2024 -0400
+
+    Merge branch 'main' of github.coecis.cornell.edu:rmg296/CS3110-FinalProject
+
+commit 1fa478ade246dc627b8a76a23e29e600321d3594
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Sat Mar 23 18:05:08 2024 -0400
+
+    Initialize project with Types
+
+commit 8cc6c415d73f78787bb1516a8e19d2432635ff56
+Author: rrs244 <rrs244@cornell.edu>
+Date:   Mon Mar 11 14:11:46 2024 -0400
+
+    Update README.md
+
+commit 3448ad2c707ed4d72cd3693574fa3981ff6150fd
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Sat Mar 9 17:29:48 2024 -0500
+
+    Fix README formatting
+
+commit 118f181b27f594c5346e5969a9dba1939ff94bb6
+Merge: 723da85 b794719
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Sat Mar 9 17:13:42 2024 -0500
+
+    Merge branch 'main' of github.coecis.cornell.edu:rmg296/CS3110-FinalProject
+
+commit 723da857730566a1634bf621f3269b204683b5b7
+Author: Zhijia Ye <zy424@cornell.edu>
+Date:   Sat Mar 9 17:09:34 2024 -0500
+
+    Added Zhijia Ye to README
+
+commit b794719457614f1d7278490e0cb4192a36730b10
+Author: Sophia Song <ss3579@cornell.edu>
+Date:   Sat Mar 9 17:05:03 2024 -0500
+
+    Add Sophia's name and NetID to readme
+
+commit c188796d57d0aecd444ac8e61ae2894799a0a936
+Author: lk496 <lk496@cornell.edu>
+Date:   Sat Mar 9 17:02:47 2024 -0500
+
+    Meghana update
+    
+    Added my name and net id.
+
+commit b3f0a74afc4c9ca2668f6ce024db94d809d3fa9b
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Sat Mar 9 16:54:34 2024 -0500
+
+    Fix README name
+
+commit 928fc3fa0f5291932dbf42aee6091ee517df71c1
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Sat Mar 9 16:51:57 2024 -0500
+
+    Added my name to README
+
+commit 4206ae3cfca2fb3b6955116c248262406a9cbb0d
+Author: Rohen Giralt <rmg296@cornell.edu>
+Date:   Sat Mar 9 16:51:04 2024 -0500
+
+    Initial commit

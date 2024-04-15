@@ -8,11 +8,32 @@ let quit_procedure () =
   print_endline "Exited the program";
   exit 0
 
+(** [set_file_perms] sets the data files to read and write allowed only for the
+    owner. *)
+let set_file_perms () =
+  Unix.chmod "data/masterpwd" 0o600;
+  Unix.chmod "data/pwd" 0o600
+
+let help_msg =
+  "Here are the available commands:\n\
+   login: Log into the password manager. Must be logged in to use other \
+   commands.\n\
+   add: Add a new password.\n\
+   list: List saved passwords.\n\
+   setpwd: Change the master password.\n\
+   import: Import passwords from an existing file.\n\
+   export: Export passwords form an existing file. Warning: Exporting \
+   passwords will export decrypted data to a file.\n\
+   quit: Quit the program."
+
 let rec logged_in_loop () =
   print_endline "Type a command:";
   let input = read_line () in
   match input with
   | "quit" -> quit_procedure ()
+  | "help" ->
+      print_endline help_msg;
+      logged_in_loop ()
   | "list" ->
       let pwd_list = FinalProject.Persistence.read_all_encryptable () in
       List.iter
@@ -33,10 +54,14 @@ let rec logged_in_loop () =
       logged_in_loop ()
 
 let rec main_loop () =
+  set_file_perms ();
   print_endline "Type a command:";
   let input = read_line () in
   match input with
   | "quit" -> quit_procedure ()
+  | "help" ->
+      print_endline help_msg;
+      main_loop ()
   | "login" -> begin
       print_endline "Type your master password:";
       let pwd = read_line () in
