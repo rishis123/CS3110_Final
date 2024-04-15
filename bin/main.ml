@@ -52,7 +52,7 @@ let rec logged_in_loop () =
       logged_in_loop ()
   | "add" ->
       print_endline "Type a new password:";
-      let pwd = read_line () in
+      let pwd = get_hidden_input () in
       let encryptable =
         FinalProject.Types.Password { name = ""; password = pwd }
       in
