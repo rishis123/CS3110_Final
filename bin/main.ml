@@ -26,6 +26,15 @@ let help_msg =
    passwords will export decrypted data to a file.\n\
    quit: Quit the program."
 
+let get_hidden_input () =
+  let settings = Unix.tcgetattr Unix.stdin in
+  settings.c_echo <- false;
+  Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
+  let input = read_line () in
+  settings.c_echo <- true;
+  Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
+  input
+
 let rec logged_in_loop () =
   print_endline "Type a command:";
   let input = read_line () in
@@ -49,6 +58,12 @@ let rec logged_in_loop () =
       in
       FinalProject.Persistence.write_encryptable encryptable;
       logged_in_loop ()
+  | "setpwd" ->
+      print_endline "Type a new password: ";
+      let newpwd = get_hidden_input () in
+      (* Delete these lines after implementing changing the password. *)
+      print_endline ("The password input was :" ^ newpwd);
+      failwith "Not implemented"
   | _ ->
       print_endline "That is not a valid command.";
       logged_in_loop ()
@@ -64,7 +79,7 @@ let rec main_loop () =
       main_loop ()
   | "login" -> begin
       print_endline "Type your master password:";
-      let pwd = read_line () in
+      let pwd = get_hidden_input () in
       if login_procedure pwd then begin
         print_endline "Logged in!";
         logged_in_loop ()
