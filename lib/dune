@@ -2,5 +2,7 @@
  (inline_tests)
  (name FinalProject)
  (libraries batteries)
+ (instrumentation
+  (backend bisect_ppx))
  (preprocess
   (pps ppx_inline_test)))
