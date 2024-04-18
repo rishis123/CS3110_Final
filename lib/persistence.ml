@@ -6,7 +6,7 @@ let read_master_password_hash () =
     BatList.of_enum (BatFile.lines_of ("data/" ^ masterpwd_filename))
   in
   let hash = BatList.hd lines in
-  Types.MasterPasswordHash hash
+  hash
 
 let write_unencryptable _ = failwith "Not implemented"
 
@@ -24,3 +24,5 @@ let write_encryptable encryptable =
       let new_stuff = BatList.enum (BatList.cons line original) in
       BatFile.write_lines ("data/" ^ pwd_filename) new_stuff
   | Types.Login _ -> failwith "Not implemented yet"
+
+let delete_encryptable_by_name _ = failwith "Not implemented"

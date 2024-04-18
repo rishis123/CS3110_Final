@@ -1,7 +1,7 @@
 (library
  (inline_tests)
  (name FinalProject)
- (libraries batteries)
+ (libraries batteries csv)
  (instrumentation
   (backend bisect_ppx))
  (preprocess
