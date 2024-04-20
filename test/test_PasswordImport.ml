@@ -15,6 +15,10 @@ let with_setup f ctxt =
        raise (Sys_error message));
   f ctxt
 
+let with_import_files f ctxt =
+  let open Core in
+  TestUtil.contents_recursive "data" |> List.iter ~f:(f ctxt)
+
 let dummy_encryptable_list =
   let open Types in
   [
@@ -51,20 +55,12 @@ let tests =
             let reimported = PasswordImport.import export_path in
             assert_equal dummy_encryptable_list reimported);
     "import |> export is identity"
-    >:: with_setup (fun _ ->
-            let import_path = "data/chrome/Chrome Passwords.csv" in
-            let imported =
-              PasswordImport.import "data/chrome/Chrome Passwords.csv"
-            in
-            let export_path = "test/Chrome Passwords.csv" in
-            PasswordImport.export imported export_path;
-            assert_files_equal import_path export_path);
-    "import idempotent" >:: with_setup (fun _ -> ());
-    "can import empty csv"
-    >:: with_setup (fun _ ->
-            let import_path = "test/data/chrome/empty.csv" in
-            let imported = PasswordImport.import import_path in
-            assert_equal [] imported);
+    >:: with_setup
+        @@ with_import_files (fun _ import_path ->
+               let imported = PasswordImport.import import_path in
+               let export_path = "test/Chrome Passwords.csv" in
+               PasswordImport.export imported export_path;
+               assert_files_equal import_path export_path);
   ]
 
 let password_import_suite = "password import test suite" >::: tests
