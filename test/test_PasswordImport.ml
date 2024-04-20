@@ -17,7 +17,8 @@ let with_setup f ctxt =
 
 let with_import_files f ctxt =
   let open Core in
-  TestUtil.contents_recursive "data" |> List.iter ~f:(f ctxt)
+  TestUtil.contents_recursive "data" ~include_dots:false
+  |> List.iter ~f:(f ctxt)
 
 let dummy_encryptable_list =
   let open Types in
@@ -46,8 +47,48 @@ let dummy_encryptable_list =
     Password { name = "my password!!"; password = "my password!!" };
   ]
 
+let expected_file_contents =
+  let open Types in
+  [
+    ( "data/chrome/Chrome Passwords.csv",
+      [
+        Login
+          {
+            name = "commas.com";
+            url = Some "https://commas.com/";
+            username = ",,,asdf,,fdas,";
+            password = ",,,,as,d,f,f,";
+          };
+        Login
+          {
+            name = "example.com";
+            url = Some "https://example.com/";
+            username = "User McUserface";
+            password = "passwordmcpasswordface";
+          };
+      ] );
+    ("data/chrome/empty.csv", []);
+    ("data/safari/empty.csv", []);
+    ( "data/safari/Passwords.csv",
+      [
+        Login
+          {
+            name = "example.com (safari mcuserface)";
+            url = Some "https://example.com/";
+            username = "safari mcuserface";
+            password = "superdupersecret password";
+          };
+      ] );
+  ]
+
 let tests =
   [
+    "import parses to expected"
+    >:: with_setup
+        @@ with_import_files (fun _ import_path ->
+               let imported = PasswordImport.import import_path in
+               let expected = List.assoc import_path expected_file_contents in
+               assert_equal expected imported);
     "export |> import is identity"
     >:: with_setup (fun _ ->
             let export_path = "test/export.csv" in
