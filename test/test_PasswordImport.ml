@@ -8,7 +8,7 @@ let assert_files_equal path1 path2 =
   assert_equal contents1 contents2
 
 let with_setup f ctxt =
-  Util.rmrf "test";
+  TestUtil.delete_recursive "test";
   (try Sys.mkdir "test" 0o700
    with Sys_error message ->
      if not (message |> String.ends_with ~suffix:"File exists") then
