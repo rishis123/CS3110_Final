@@ -61,9 +61,12 @@ let rec logged_in_loop () =
   | "setpwd" ->
       print_endline "Type a new password: ";
       let newpwd = get_hidden_input () in
-      (* Delete these lines after implementing changing the password. *)
+      (* Salt & Hash -> Convert ot MasterPasswordHash type*)
+      let master_pwd = FinalProject.Encrypt.salt_hash newpwd in
+
+      let () = FinalProject.Persistence.write_unencryptable master_pwd in
       print_endline ("The password input was :" ^ newpwd);
-      failwith "Not implemented"
+      logged_in_loop ()
   | _ ->
       print_endline "That is not a valid command.";
       logged_in_loop ()

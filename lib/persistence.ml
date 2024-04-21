@@ -13,10 +13,12 @@ let read_master_password_hash () =
   let hash = BatList.hd lines in
   hash
 
-(* Write unencryptable information i.e. master password to memory. No encryption
-   performed to it. *)
+(* Write unencryptable information i.e. master password to memory for first
+   time. Presumably passed in in hashed from. *)
 let write_unencryptable master_value =
   BatFile.write_lines ("data/" ^ masterpwd_filename) master_value
+
+let read_unencryptable _ = raise (Failure "Not implemented")
 
 (* Revised functionality to include either password or login values *)
 let read_all_encryptable () =
