@@ -16,9 +16,14 @@ let read_master_password_hash () =
 (* Write unencryptable information i.e. master password to memory for first
    time. Presumably passed in in hashed from. *)
 let write_unencryptable master_value =
-  BatFile.write_lines ("data/" ^ masterpwd_filename) master_value
-
-let read_unencryptable _ = raise (Failure "Not implemented")
+  match master_value with
+  | Types.MasterPasswordHash hash ->
+      let original =
+        BatList.of_enum (BatFile.lines_of ("data/" ^ pwd_filename))
+        (* takes whatever passwords are already in the file*)
+      in
+      let new_stuff = BatList.enum (BatList.cons hash original) in
+      BatFile.write_lines ("data/" ^ masterpwd_filename) new_stuff
 
 (* Revised functionality to include either password or login values *)
 let read_all_encryptable () =
@@ -46,23 +51,16 @@ let write_encryptable encryptable =
 (* Given the password or login we want to delete in unencrypted -- first
    encrypts them (assuming encryption function always yields the same output).
    Then, searches the BatFile for it, and removes it.*)
-let delete_encryptable_by_name to_delete_unencrypted =
-  match to_delete_unencrypted with
-  | Types.Password _ ->
-      let list_of_passwords = read_all_encryptable () in
-      let rec rev_list = function
-        | h :: t ->
-            if h = to_delete_unencrypted then rev_list t else h :: rev_list t
-        | [] -> []
-      in
-      (* helper function to return a list without the matching values*)
-      let encrypt_rev_list =
-        List.map Encrypt.encrypt (rev_list list_of_passwords)
-      in
-      BatFile.write_lines ("data/" ^ pwd_filename)
-        (BatList.enum encrypt_rev_list)
-      (* Prepends the new password we want to encrypt and write to file with
-         everything already in the passwords file, then writes everything to
-         memory*)
-      (* *)
-  | Types.Login _ -> failwith "Not implemented yet"
+let delete_encryptable_by_name encrypt_val_name =
+  let encryptable_list = read_all_encryptable () in
+  let filtered_list =
+    List.filter
+      (fun encryptable ->
+        match encryptable with
+        | Types.Password pwd -> pwd.name <> encrypt_val_name
+        | Types.Login login -> login.name <> encrypt_val_name)
+      encryptable_list
+  in
+  let encrypted_filtered_list = List.map Encrypt.encrypt filtered_list in
+  BatFile.write_lines ("data/" ^ pwd_filename)
+    (BatList.enum encrypted_filtered_list)
