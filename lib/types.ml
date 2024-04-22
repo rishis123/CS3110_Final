@@ -1,10 +1,16 @@
 type master_password_hash = string
+(** [master_password_hash] is the type of a hash of the master password, used
+    for checking validity at startup *)
+
+(** [unencryptable] is the type of any storable data *)
 type unencryptable = MasterPasswordHash of master_password_hash
 
 type password = {
   name : string;
   password : string;
 }
+(** [password] is the type of a simple named password. Note that the master
+    password is never represented as a [password], and is fact never stored *)
 
 type login = {
   name : string;
@@ -12,8 +18,10 @@ type login = {
   password : string;
   url : string option;
 }
+(** [login] is the type of a login, which contains richer information than just
+    a password *)
 
-(* User has choice to encrypt either whole password, or login info*)
+(** [encryptable] is the type of a possible secret that can be stored *)
 type encryptable =
   | Password of password
   | Login of login
