@@ -6,8 +6,18 @@ type import_exn =
 
 exception ImportExn of import_exn
 
+let proprietary_export_header =
+  [ "type"; "name"; "username"; "password"; "url" ]
+
 module Parser = struct
   type t = string list -> encryptable
+
+  let parse_proprietary_csv : t = function
+    | [ "Login"; name; username; password; url ] ->
+        let url = Util.non_empty_or_none url in
+        Login { name; username; password; url }
+    | [ "Password"; name; ""; password; "" ] -> Password { name; password }
+    | _ -> raise (ImportExn NonRectangularInput)
 
   let parse_chrome_csv : t = function
     | [ name; url; username; password; note ] ->
@@ -32,6 +42,8 @@ module Parser = struct
     | [ "name"; "url"; "username"; "password"; "note" ] -> parse_chrome_csv
     | [ "Title"; "URL"; "Username"; "Password"; "Notes"; "OTPAuth" ] ->
         parse_safari_csv
+    | header when header = [ "type"; "name"; "username"; "password"; "url" ] ->
+      parse_proprietary_csv
     | _ -> raise (ImportExn UnsupportedHeaders)
 end
 
@@ -41,9 +53,6 @@ let import path =
   let header = Rows.header csv in
   let parse = Parser.of_header header in
   fold_left ~f:(fun acc row -> parse row :: acc) ~init:[] csv |> List.rev
-
-let proprietary_export_header =
-  [ "type"; "name"; "username"; "password"; "url" ]
 
 let row_of_encryptable =
   let assert_len row =
@@ -66,10 +75,12 @@ exception ExportExn of export_exn
 
 let export secrets path =
   if Sys.file_exists path then raise @@ ExportExn FileExists;
-  let csv = secrets
-  |> List.map (fun secret -> row_of_encryptable secret |> Array.of_list)
-  |> Array.of_list
-  |> (Array.append @@ [|Array.of_list proprietary_export_header|])
-  |> Csv.of_array in
+  let csv =
+    secrets
+    |> List.map (fun secret -> row_of_encryptable secret |> Array.of_list)
+    |> Array.of_list
+    |> Array.append @@ [| Array.of_list proprietary_export_header |]
+    |> Csv.of_array
+  in
   Csv.save path csv;
   assert (Sys.file_exists path)

@@ -61,41 +61,7 @@ let dummy_encryptable_list =
     Password { name = "my password!!"; password = "my password!!" };
   ]
 
-let expected_imported_contents =
-  let open Types in
-  [
-    ( "data/chrome/Chrome Passwords.csv",
-      [
-        Login
-          {
-            name = "commas.com";
-            url = Some "https://commas.com/";
-            username = ",,,asdf,,fdas,";
-            password = ",,,,as,d,f,f,";
-          };
-        Login
-          {
-            name = "example.com";
-            url = Some "https://example.com/";
-            username = "User McUserface";
-            password = "passwordmcpasswordface";
-          };
-      ] );
-    ("data/chrome/empty.csv", []);
-    ("data/safari/empty.csv", []);
-    ( "data/safari/Passwords.csv",
-      [
-        Login
-          {
-            name = "example.com (safari mcuserface)";
-            url = Some "https://example.com/";
-            username = "safari mcuserface";
-            password = "superdupersecret password";
-          };
-      ] );
-  ]
-
-let expected_exported_contents =
+let expected_proprietary_contents =
   let open Types in
   [
     ("data/proprietary/empty.csv", []);
@@ -141,6 +107,43 @@ let expected_exported_contents =
           };
       ] );
   ]
+
+let expected_external_contents =
+  let open Types in
+  [
+    ( "data/chrome/Chrome Passwords.csv",
+      [
+        Login
+          {
+            name = "commas.com";
+            url = Some "https://commas.com/";
+            username = ",,,asdf,,fdas,";
+            password = ",,,,as,d,f,f,";
+          };
+        Login
+          {
+            name = "example.com";
+            url = Some "https://example.com/";
+            username = "User McUserface";
+            password = "passwordmcpasswordface";
+          };
+      ] );
+    ("data/chrome/empty.csv", []);
+    ("data/safari/empty.csv", []);
+    ( "data/safari/Passwords.csv",
+      [
+        Login
+          {
+            name = "example.com (safari mcuserface)";
+            url = Some "https://example.com/";
+            username = "safari mcuserface";
+            password = "superdupersecret password";
+          };
+      ] );
+  ]
+
+let expected_exported_contents = expected_proprietary_contents
+let expected_imported_contents = expected_proprietary_contents @ expected_external_contents
 
 let tests =
   [
