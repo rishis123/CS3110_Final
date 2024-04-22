@@ -1,3 +1,5 @@
 (test
  (name test_FinalProject)
- (libraries ounit2 FinalProject))
+ (deps
+  (source_tree data))
+ (libraries ounit2 FinalProject core unix))
