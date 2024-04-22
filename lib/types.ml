@@ -2,7 +2,7 @@ type master_password_hash = string
 (** [master_password_hash] is the type of a hash of the master password, used
     for checking validity at startup *)
 
-(** [unencryptable] is the type of any storable data *)
+(** [unencryptable] is the type of any storable data that is not encrypted *)
 type unencryptable = MasterPasswordHash of master_password_hash
 
 type password = {
