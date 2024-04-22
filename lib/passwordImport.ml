@@ -42,4 +42,34 @@ let import path =
   let parse = Parser.of_header header in
   fold_left ~f:(fun acc row -> parse row :: acc) ~init:[] csv |> List.rev
 
-let export _ _ = failwith "Not implemented"
+let proprietary_export_header =
+  [ "type"; "name"; "username"; "password"; "url" ]
+
+let row_of_encryptable =
+  let assert_len row =
+    assert (List.length row = List.length proprietary_export_header);
+    row
+  in
+  function
+  | Login l ->
+      begin
+        match l.url with
+        | Some url -> [ "Login"; l.name; l.username; l.password; url ]
+        | None -> [ "Login"; l.name; l.username; l.password; "" ]
+      end
+      |> assert_len
+  | Password p -> [ "Password"; p.name; ""; p.password; "" ] |> assert_len
+
+type export_exn = FileExists
+
+exception ExportExn of export_exn
+
+let export secrets path =
+  if Sys.file_exists path then raise @@ ExportExn FileExists;
+  let csv = secrets
+  |> List.map (fun secret -> row_of_encryptable secret |> Array.of_list)
+  |> Array.of_list
+  |> (Array.append @@ [|Array.of_list proprietary_export_header|])
+  |> Csv.of_array in
+  Csv.save path csv;
+  assert (Sys.file_exists path)
