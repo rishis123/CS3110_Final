@@ -1,3 +1,5 @@
+open FinalProject
+
 let login_procedure pwd =
   if FinalProject.MasterPassword.check_master pwd then
     let () = FinalProject.Encrypt.set_key pwd in
@@ -64,6 +66,18 @@ let rec logged_in_loop () =
       (* Delete these lines after implementing changing the password. *)
       print_endline ("The password input was :" ^ newpwd);
       failwith "Not implemented"
+  | "export" ->
+      print_endline "Type the path to which you would like to export: ";
+      let path = read_line () in
+      let secrets = Persistence.read_all_encryptable () in
+      PasswordImport.export secrets path;
+      Printf.printf "Passwords successfully exported to %s\n%!" path
+  | "import" ->
+      print_endline "Type the path to the passwords you would like to import: ";
+      let path = read_line () in
+      let new_secrets = PasswordImport.import path in
+      new_secrets |> List.iter Persistence.write_encryptable;
+      Printf.printf "Passwords successfully imported from %s\n%!" path
   | _ ->
       print_endline "That is not a valid command.";
       logged_in_loop ()
