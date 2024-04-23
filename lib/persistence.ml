@@ -64,3 +64,5 @@ let delete_encryptable_by_name encrypt_val_name =
   let encrypted_filtered_list = List.map Encrypt.encrypt filtered_list in
   BatFile.write_lines ("data/" ^ pwd_filename)
     (BatList.enum encrypted_filtered_list)
+
+let autocomplete _ = raise (Failure "Not implemented")

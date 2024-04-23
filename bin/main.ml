@@ -22,6 +22,8 @@ let help_msg =
    commands.\n\
    add: Add a new password.\n\
    list: List saved passwords.\n\
+   findsing: Autocompletes given name and lists relevant password or login \
+   information \n\
    setpwd: Change the master password.\n\
    import: Import passwords from an existing file.\n\
    export: Export passwords form an existing file. Warning: Exporting \
@@ -52,6 +54,16 @@ let rec logged_in_loop () =
           print_endline (FinalProject.Serialization.encryptable_to_string x))
         pwd_list;
       logged_in_loop ()
+  | "findsing" ->
+      let desired = read_line () in
+      let autocomplete : Types.encryptable list =
+        FinalProject.Persistence.autocomplete desired
+      in
+      List.iter
+        (fun x ->
+          print_endline (FinalProject.Serialization.encryptable_to_string x))
+        autocomplete;
+      logged_in_loop ()
   | "add" ->
       print_endline "Type a new password:";
       let pwd = get_hidden_input () in
@@ -67,7 +79,7 @@ let rec logged_in_loop () =
       let master_pwd = FinalProject.Encrypt.salt_hash newpwd in
 
       let () = FinalProject.Persistence.write_unencryptable master_pwd in
-      print_endline ("The password input was :" ^ newpwd);
+      print_endline ("The password input was :" ^ newpwd)
   | "export" ->
       print_endline "Type the path to which you would like to export: ";
       let path = read_line () in
