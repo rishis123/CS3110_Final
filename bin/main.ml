@@ -118,8 +118,23 @@ let rec main_loop () =
         let () = print_endline "The password does not match" in
         main_loop ()
     end
-  | _ ->
-      print_endline "That is not a valid command.";
+  | x -> begin
+      if
+        x = "add"
+        || x = "list"
+        || x = "findsing"
+        || x = "setpwd"
+        || x = "import"
+        || x = "export"
+      then
+        let () =
+          print_endline
+            "Must log in before using these commands -- try 'login' to log in \
+             or 'help'"
+        in
+        main_loop ()
+      else print_endline "That is not a valid command.";
       main_loop ()
+    end
 
 let _ = main_loop ()
