@@ -24,7 +24,8 @@ let help_msg =
    list: List saved passwords.\n\
    findsing: Autocompletes given name and lists relevant password or login \
    information \n\
-   setpwd: Change the master password.\n\
+   gen_password: Generates password with choice\n\
+  \   setpwd: Change the master password.\n\
    import: Import passwords from an existing file.\n\
    export: Export passwords form an existing file. Warning: Exporting \
    passwords will export decrypted data to a file.\n\
@@ -38,6 +39,54 @@ let get_hidden_input () =
   settings.c_echo <- true;
   Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
   input
+
+let rec generate_password_with_special index acc =
+  if index <= 0 then acc
+  else
+    let range_choice = Random.int 4 in
+    let char_val =
+      match range_choice with
+      | 0 -> Char.chr (97 + Random.int 26) (* lowercase letters (a-z) *)
+      | 1 -> Char.chr (65 + Random.int 26) (* uppercase letters (A-Z) *)
+      | 2 -> Char.chr (48 + Random.int 10) (* digits (0-9) *)
+      | _ -> Char.chr (Array.get [| 35; 36; 38 |] (Random.int 3))
+      (* symbols (#, $, &) *)
+    in
+    generate_password_with_special (index - 1) (char_val :: acc)
+
+let rec generate_password_without_special index acc =
+  if index <= 0 then acc
+  else
+    let range_choice = Random.int 3 in
+    let char_val =
+      match range_choice with
+      | 0 -> Char.chr (97 + Random.int 26) (* lowercase letters (a-z) *)
+      | 1 -> Char.chr (65 + Random.int 26) (* uppercase letters (A-Z) *)
+      | _ -> Char.chr (48 + Random.int 10)
+      (* digits (0-9) *)
+    in
+    generate_password_without_special (index - 1) (char_val :: acc)
+
+let gen_password_val () =
+  print_endline "Choose password length:";
+  let length_choice = int_of_string (read_line ()) in
+
+  print_endline "Allow special characters?";
+  print_endline "1. Yes";
+  print_endline "2. No";
+  let special_choice = int_of_string (read_line ()) in
+
+  (* printing string representation of the returned char list*)
+  match (length_choice, special_choice) with
+  | len, 1 ->
+      print_endline
+        (String.concat ""
+           (List.map Char.escaped (generate_password_with_special len [])))
+  | len, 2 ->
+      print_endline
+        (String.concat ""
+           (List.map Char.escaped (generate_password_without_special len [])))
+  | _ -> print_endline "Invalid response."
 
 let rec logged_in_loop () =
   print_endline "Type a command:";
@@ -63,6 +112,9 @@ let rec logged_in_loop () =
         (fun x ->
           print_endline (FinalProject.Serialization.encryptable_to_string x))
         autocomplete;
+      logged_in_loop ()
+  | "gen_password" ->
+      gen_password_val ();
       logged_in_loop ()
   | "add" ->
       print_endline "Type a new password:";
@@ -123,6 +175,7 @@ let rec main_loop () =
         x = "add"
         || x = "list"
         || x = "findsing"
+        || x = "gen_password"
         || x = "setpwd"
         || x = "import"
         || x = "export"
