@@ -2,4 +2,4 @@
  (name test_FinalProject)
  (deps
   (source_tree data))
- (libraries ounit2 qcheck FinalProject core unix))
+ (libraries ounit2 qcheck FinalProject core unix lwt))

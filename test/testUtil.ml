@@ -33,3 +33,33 @@ let contents_recursive dir ~include_dots =
     | [] -> result
   in
   loop [] [ dir ]
+
+exception Timeout
+
+let run_timeout timeout f =
+  try
+    (* Implementation adapted from
+       https://discuss.ocaml.org/t/computation-with-time-constraint/5548/9,
+       accessed 2024-04-24 *)
+    let _ =
+      Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Timeout))
+    in
+    ignore (Unix.alarm timeout);
+    try
+      f ();
+      ignore (Unix.alarm 0);
+      Sys.set_signal Sys.sigalrm Sys.Signal_default;
+      true
+    with e ->
+      ignore (Unix.alarm 0);
+      raise e
+  with Timeout ->
+    Sys.set_signal Sys.sigalrm Sys.Signal_default;
+    false
+
+let zip (s1 : 'a Seq.t) (s2 : 'b Seq.t) : ('a * 'b) Seq.t =
+  let open Seq in
+  match (s1 (), s2 ()) with
+  | Cons (h1, t1), Cons (h2, t2) -> fun () -> Cons ((h1, h2), zip t1 t2)
+  | Nil, Nil -> fun () -> Nil
+  | _ -> failwith "different sizes"
