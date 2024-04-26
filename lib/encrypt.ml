@@ -3,7 +3,8 @@ let set_key key = masterkey := key
 let encrypt encryptable = Serialization.encryptable_to_string encryptable
 
 let decrypt_password encrypted =
-  Types.Password { name = ""; password = encrypted }
+  let open Types in
+  { name = ""; password = encrypted }
 
 let decrypt_login encrypted =
   ignore encrypted;

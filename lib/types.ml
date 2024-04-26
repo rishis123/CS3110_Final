@@ -10,7 +10,7 @@ type password = {
   password : string;
 }
 (** [password] is the type of a simple named password. Note that the master
-    password is never represented as a [password], and is fact never stored *)
+    password is never represented as a [password], and is in fact never stored *)
 
 type login = {
   name : string;
