@@ -117,11 +117,11 @@ let rec logged_in_loop () =
       gen_password_val ();
       logged_in_loop ()
   | "add" ->
-      print_endline "Type a new password:";
-      let pwd = get_hidden_input () in
-      let encryptable =
-        FinalProject.Types.Password { name = ""; password = pwd }
-      in
+      print_endline "What would you like to name this password?";
+      let name = read_line () in
+      print_endline "Enter the password:";
+      let password = get_hidden_input () in
+      let encryptable = FinalProject.Types.Password { name; password } in
       FinalProject.Persistence.write_encryptable encryptable;
       logged_in_loop ()
   | "setpwd" ->

@@ -9,7 +9,7 @@ Install the required dependencies using the following commands in a terminal:
 ```sh
 $ opam update
 $ opam upgrade
-$ opam install batteries ppx_inline_test core csv
+$ opam install batteries ppx_inline_test core csv yojson
 ```
 
 Then, you can build and run the project with the following commands. Make sure you have changed directory to be in the project's root directory (the project root is the folder containing this `INSTALL.md` file).
