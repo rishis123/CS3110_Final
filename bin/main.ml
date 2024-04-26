@@ -10,12 +10,6 @@ let quit_procedure () =
   print_endline "Exited the program";
   exit 0
 
-(** [set_file_perms] sets the data files to read and write allowed only for the
-    owner. *)
-let set_file_perms () =
-  Unix.chmod "data/masterpwd" 0o600;
-  Unix.chmod "data/pwd" 0o600
-
 let help_msg =
   "Here are the available commands:\n\
    login: Log into the password manager. Must be logged in to use other \
@@ -106,7 +100,7 @@ let rec logged_in_loop () =
   | "findsing" ->
       let desired = read_line () in
       let autocomplete : Types.encryptable list =
-        FinalProject.Persistence.autocomplete desired
+        Autocomplete.autocomplete desired
       in
       List.iter
         (fun x ->
@@ -151,7 +145,7 @@ let rec logged_in_loop () =
       logged_in_loop ()
 
 let rec main_loop () =
-  set_file_perms ();
+  Persistence.set_file_perms ();
   print_endline "Type a command:";
   let input = read_line () in
   match input with
