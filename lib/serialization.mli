@@ -1,8 +1,15 @@
 val unencryptable_to_string : Types.unencryptable -> string
-(** [unencryptable_to_string u] is the contents of [Types.MasterPasswordHash].*)
+(** [unencryptable_to_string u] is the contents of [Types.MasterPasswordHash]. *)
+
+val unencryptable_of_string_opt : string -> Types.unencryptable option
+(** [unencryptable_of_string str] is the [Types.MasterPasswordHash] that is
+    represented by [str]. Returns {!None} if [str] does not represent any
+    [Types.MasterPasswordHash]. *)
 
 val encryptable_to_string : Types.encryptable -> string
-(** [encryptable_to_string e] is the contents of [Types.Encryptable] separated
-    by commas with named fields. Example: If e is a [Types.Password] and
-    [e.name = "Beans"] and [e.password = "pwd123"], the
-    [encryptable_to_string e = "name = Beans, password = pwd123"]*)
+(** [encryptable_to_string e] is a reversable string representation of [e]. *)
+
+val encryptable_of_string_opt : string -> Types.encryptable option
+(** [encryptable_of_string str] is the [Types.encryptable] that is represented
+    by [str]. Returns {!None} if [str] does not represent any
+    [Types.encryptable]. *)
