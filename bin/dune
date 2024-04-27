@@ -1,4 +1,4 @@
-(executable
- (public_name FinalProject)
- (name main)
- (libraries FinalProject unix))
+(executables
+ (public_names FinalProjectMain FinalProjectGui)
+ (names main gui)
+ (libraries FinalProject unix bogue))
