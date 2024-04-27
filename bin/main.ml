@@ -1,8 +1,9 @@
 open FinalProject
+open Encryption
 
 let login_procedure pwd =
   if FinalProject.MasterPassword.check_master pwd then
-    let () = FinalProject.Encrypt.set_key pwd in
+    let () = Encrypt.set_key pwd in
     true
   else false
 
@@ -91,10 +92,9 @@ let rec logged_in_loop () =
       print_endline help_msg;
       logged_in_loop ()
   | "list" ->
-      let pwd_list = FinalProject.Persistence.read_all_encryptable () in
+      let pwd_list = Persistence.read_all_encryptable () in
       List.iter
-        (fun x ->
-          print_endline (FinalProject.Serialization.encryptable_to_string x))
+        (fun x -> print_endline (Types.string_of_encryptable x))
         pwd_list;
       logged_in_loop ()
   | "findsing" ->
@@ -103,8 +103,7 @@ let rec logged_in_loop () =
         Autocomplete.autocomplete desired
       in
       List.iter
-        (fun x ->
-          print_endline (FinalProject.Serialization.encryptable_to_string x))
+        (fun x -> print_endline (Types.string_of_encryptable x))
         autocomplete;
       logged_in_loop ()
   | "gen_password" ->
@@ -115,16 +114,16 @@ let rec logged_in_loop () =
       let name = read_line () in
       print_endline "Enter the password:";
       let password = get_hidden_input () in
-      let encryptable = FinalProject.Types.Password { name; password } in
-      FinalProject.Persistence.write_encryptable encryptable;
+      let encryptable = Types.Password { name; password } in
+      Persistence.write_encryptable encryptable;
       logged_in_loop ()
   | "setpwd" ->
       print_endline "Type a new password: ";
       let newpwd = get_hidden_input () in
       (* Salt & Hash -> Convert ot MasterPasswordHash type*)
-      let master_pwd = FinalProject.Encrypt.salt_hash newpwd in
+      let master_pwd = Encrypt.salt_hash newpwd in
 
-      let () = FinalProject.Persistence.write_unencryptable master_pwd in
+      let () = Persistence.write_unencryptable master_pwd in
       print_endline ("The password input was :" ^ newpwd)
   | "export" ->
       print_endline "Type the path to which you would like to export: ";

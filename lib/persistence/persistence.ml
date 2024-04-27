@@ -1,3 +1,5 @@
+open Encryption
+
 (* Filename for file that stores master password in hashed form *)
 let masterpwd_file_path = "data/unencrypted/masterpwd"
 
@@ -10,8 +12,7 @@ let set_file_perms () =
   Unix.chmod masterpwd_file_path 0o600;
   Unix.chmod pwd_file_path 0o600
 
-(* Goes to the file with the hashed master password, and returns the first line
-   (which is still hashed). Hash is presumably in first line.*)
+(* Precondition: the hash is in the first line of [masterpwd_file_path]. *)
 let read_master_password_hash () =
   let lines = BatList.of_enum (BatFile.lines_of masterpwd_file_path) in
   let hash = BatList.hd lines in
