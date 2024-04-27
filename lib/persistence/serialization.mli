@@ -1,4 +1,4 @@
 open Encryption.Encrypt
 
-val encrypteds_of_string : string -> encrypted list
-val string_of_encrypteds : encrypted list -> string
+val file_contents_of_encrypteds : encrypted list -> string
+val encrypteds_of_file_contents : string -> encrypted list

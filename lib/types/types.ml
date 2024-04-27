@@ -26,6 +26,10 @@ type encryptable =
   | Password of password
   | Login of login
 
+let name_of_encryptable = function
+  | Password { name; _ } -> name
+  | Login { name; _ } -> name
+
 (** [string_of_password p] is a string representation of [p] for logging or
     debugging. *)
 let string_of_password (p : password) : string =

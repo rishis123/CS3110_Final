@@ -1,7 +1,7 @@
-let encrypteds_of_string str =
+let encrypteds_of_file_contents str =
   ignore str;
   failwith "Not yet implemented"
 
-let string_of_encrypteds input =
+let file_contents_of_encrypteds input =
   ignore input;
   failwith "Not yet implemented"

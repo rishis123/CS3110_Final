@@ -29,7 +29,10 @@ let write_unencryptable master_value =
 let read_all_encryptable () =
   let lines = BatList.of_enum (BatFile.lines_of pwd_file_path) in
   BatList.map
-    (fun x -> Types.Password (Encrypt.decrypt_password (EncryptedString x)))
+    (fun x ->
+      Types.Password
+        (Encrypt.decrypt_password
+           (EncryptedString { name = ""; encrypted_data = x })))
     lines
 (* NOTE: THIS WILL BE MODIFIED WHEN decrypt_login FUNCTIONALITY IS DONE*)
 
@@ -37,12 +40,14 @@ let read_all_encryptable () =
 let write_encryptable encryptable =
   match encryptable with
   | Types.Password _ ->
-      let (EncryptedString line) = Encrypt.encrypt encryptable in
+      let (EncryptedString { encrypted_data; _ }) =
+        Encrypt.encrypt encryptable
+      in
       let original =
         BatList.of_enum (BatFile.lines_of pwd_file_path)
         (* takes whatever passwords are already in the file*)
       in
-      let new_stuff = BatList.enum (BatList.cons line original) in
+      let new_stuff = BatList.enum (BatList.cons encrypted_data original) in
       BatFile.write_lines pwd_file_path new_stuff
       (* Prepends the new password we want to encrypt and write to file with
          everything already in the passwords file, then writes everything to
@@ -65,6 +70,8 @@ let delete_encryptable_by_name encrypt_val_name =
   in
   let encrypted_filtered_list = List.map Encrypt.encrypt filtered_list in
   let encrypted_filtered_lines =
-    List.map (fun (Encrypt.EncryptedString str) -> str) encrypted_filtered_list
+    List.map
+      (fun (Encrypt.EncryptedString { encrypted_data; _ }) -> encrypted_data)
+      encrypted_filtered_list
   in
   BatFile.write_lines pwd_file_path (BatList.enum encrypted_filtered_lines)

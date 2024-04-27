@@ -1,4 +1,8 @@
-type encrypted = EncryptedString of string
+type encrypted =
+  | EncryptedString of {
+      name : string;
+      encrypted_data : string;
+    }
 
 val set_key : string -> unit
 (** [set_key pwd] sets the master password to the given [pwd] *)
