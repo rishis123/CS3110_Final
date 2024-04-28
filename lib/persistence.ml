@@ -37,17 +37,21 @@ let read_all_encryptable () =
 
 (* Writes either password or login information to file*)
 let write_encryptable encryptable =
-  let old_entries = Yojson.Basic.seq_from_file encrypted_file_path in
+  let old_entries =
+    Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
+  in
   let new_entry =
     Encrypt.encrypt encryptable |> Serialization.json_of_encrypted
     (* takes whatever passwords are already in the file*)
   in
   let new_entries = Seq.cons new_entry old_entries in
-  (* TODO: Does this overwrite (desired) or append (undesired)? *)
+  (* Must read the data fully into memory before writing it since otherwise
+     reading and writing will occur concurrently leading to data corruption *)
+  let new_entries_copy = new_entries |> List.of_seq |> List.to_seq in
   (* Prepends the new password we want to encrypt and write to file with
      everything already in the passwords file, then writes everything to
      memory*)
-  Yojson.Basic.seq_to_file encrypted_file_path new_entries
+  Yojson.Basic.seq_to_file encrypted_file_path new_entries_copy
 
 (* Given the password or login we want to delete in unencrypted -- first
    encrypts them (assuming encryption function always yields the same output).
