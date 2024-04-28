@@ -4,11 +4,11 @@ open Types
 let masterpwd_file_path = "data/unencrypted/masterpwd"
 
 (** Filename for file that stores all passwords in hashed form. Deprecated. *)
-let pwd_file_path = "data/encrypted/encryptables.json"
+let pwd_file_path = "data/encrypted/encryptables"
 
 (** Filename for file that stores all encrypted data. Invariant: this data
     matches the schema in schemas/encryptables-schema.json *)
-let encrypted_file_path = "data/encrypted/encryptables.json"
+let encrypted_file_path = "data/encrypted/encryptables"
 
 (** [set_file_perms] sets the data files to read and write allowed only for the
     owner. *)
