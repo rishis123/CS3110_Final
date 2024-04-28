@@ -26,11 +26,12 @@ let write_unencryptable master_value =
   | Types.MasterPasswordHash hash ->
       BatFile.write_lines masterpwd_file_path (BatList.enum [ hash ])
 
-let read_all_encryptable () =
+let read_all_encryptable_seq () =
   Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
   |> Seq.map Serialization.encrypted_of_json
   |> Seq.map Encrypt.decrypt
-  |> List.of_seq
+
+let read_all_encryptable () = read_all_encryptable_seq () |> List.of_seq
 
 (* Writes either password or login information to file*)
 let write_encryptable encryptable =
@@ -54,19 +55,14 @@ let write_encryptable encryptable =
    encrypts them (assuming encryption function always yields the same output).
    Then, searches the BatFile for it, and removes it.*)
 let delete_encryptable_by_name encrypt_val_name =
-  let encryptable_list = read_all_encryptable () in
-  let filtered_list =
-    List.filter
-      (fun encryptable ->
-        match encryptable with
-        | Password pwd -> pwd.name <> encrypt_val_name
-        | Login login -> login.name <> encrypt_val_name)
-      encryptable_list
+  let encryptable_seq = read_all_encryptable_seq () in
+  let filtered_seq =
+    Seq.filter
+      (fun encryptable -> name_of_encryptable encryptable = encrypt_val_name)
+      encryptable_seq
   in
-  let encrypted_filtered_list = List.map Encrypt.encrypt filtered_list in
+  let encrypted_filtered_seq = Seq.map Encrypt.encrypt filtered_seq in
   let encrypted_filtered_lines =
-    List.map
-      (fun (EncryptedString { encrypted_data; _ }) -> encrypted_data)
-      encrypted_filtered_list
+    Seq.map Serialization.json_of_encrypted encrypted_filtered_seq
   in
-  BatFile.write_lines encrypted_file_path (BatList.enum encrypted_filtered_lines)
+  Yojson.Basic.seq_to_file encrypted_file_path encrypted_filtered_lines
