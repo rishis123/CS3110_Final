@@ -1,5 +1,4 @@
 open FinalProject
-open Encryption
 
 let login_procedure pwd =
   if FinalProject.MasterPassword.check_master pwd then

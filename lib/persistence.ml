@@ -1,10 +1,14 @@
-open Encryption
+open Types
 
 (* Filename for file that stores master password in hashed form *)
 let masterpwd_file_path = "data/unencrypted/masterpwd"
 
-(** Filename for file that stores all passwords in hashed form*)
-let pwd_file_path = "data/encrypted/pwd"
+(** Filename for file that stores all passwords in hashed form. Deprecated. *)
+let pwd_file_path = "data/encrypted/encryptables.json"
+
+(** Filename for file that stores all encrypted data. Invariant: this data
+    matches the schema in schemas/encryptables-schema.json *)
+let encrypted_file_path = "data/encrypted/encryptables.json"
 
 (** [set_file_perms] sets the data files to read and write allowed only for the
     owner. *)
@@ -25,35 +29,25 @@ let write_unencryptable master_value =
   | Types.MasterPasswordHash hash ->
       BatFile.write_lines masterpwd_file_path (BatList.enum [ hash ])
 
-(* Revised functionality to include either password or login values *)
 let read_all_encryptable () =
-  let lines = BatList.of_enum (BatFile.lines_of pwd_file_path) in
-  BatList.map
-    (fun x ->
-      Types.Password
-        (Encrypt.decrypt_password
-           (EncryptedString { name = ""; encrypted_data = x })))
-    lines
-(* NOTE: THIS WILL BE MODIFIED WHEN decrypt_login FUNCTIONALITY IS DONE*)
+  Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
+  |> Seq.map Serialization.encrypted_of_json
+  |> Seq.map Encrypt.decrypt
+  |> List.of_seq
 
 (* Writes either password or login information to file*)
 let write_encryptable encryptable =
-  match encryptable with
-  | Types.Password _ ->
-      let (EncryptedString { encrypted_data; _ }) =
-        Encrypt.encrypt encryptable
-      in
-      let original =
-        BatList.of_enum (BatFile.lines_of pwd_file_path)
-        (* takes whatever passwords are already in the file*)
-      in
-      let new_stuff = BatList.enum (BatList.cons encrypted_data original) in
-      BatFile.write_lines pwd_file_path new_stuff
-      (* Prepends the new password we want to encrypt and write to file with
-         everything already in the passwords file, then writes everything to
-         memory*)
-      (* *)
-  | Types.Login _ -> failwith "Not implemented yet"
+  let old_entries = Yojson.Basic.seq_from_file encrypted_file_path in
+  let new_entry =
+    Encrypt.encrypt encryptable |> Serialization.json_of_encrypted
+    (* takes whatever passwords are already in the file*)
+  in
+  let new_entries = Seq.cons new_entry old_entries in
+  (* TODO: Does this overwrite (desired) or append (undesired)? *)
+  (* Prepends the new password we want to encrypt and write to file with
+     everything already in the passwords file, then writes everything to
+     memory*)
+  Yojson.Basic.seq_to_file encrypted_file_path new_entries
 
 (* Given the password or login we want to delete in unencrypted -- first
    encrypts them (assuming encryption function always yields the same output).
@@ -64,14 +58,14 @@ let delete_encryptable_by_name encrypt_val_name =
     List.filter
       (fun encryptable ->
         match encryptable with
-        | Types.Password pwd -> pwd.name <> encrypt_val_name
-        | Types.Login login -> login.name <> encrypt_val_name)
+        | Password pwd -> pwd.name <> encrypt_val_name
+        | Login login -> login.name <> encrypt_val_name)
       encryptable_list
   in
   let encrypted_filtered_list = List.map Encrypt.encrypt filtered_list in
   let encrypted_filtered_lines =
     List.map
-      (fun (Encrypt.EncryptedString { encrypted_data; _ }) -> encrypted_data)
+      (fun (EncryptedString { encrypted_data; _ }) -> encrypted_data)
       encrypted_filtered_list
   in
   BatFile.write_lines pwd_file_path (BatList.enum encrypted_filtered_lines)

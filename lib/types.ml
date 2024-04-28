@@ -60,3 +60,14 @@ let string_of_master_password_hash (h : master_password_hash) : string = h
     debugging. *)
 let string_of_unencryptable : unencryptable -> string = function
   | MasterPasswordHash h -> string_of_master_password_hash h
+
+type encrypted_form =
+  | EncryptedLogin
+  | EncryptedPassword
+
+type encrypted =
+  | EncryptedString of {
+      form : encrypted_form;
+      name : string;
+      encrypted_data : string;
+    }

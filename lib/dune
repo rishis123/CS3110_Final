@@ -1,7 +1,7 @@
 (library
  (inline_tests)
  (name FinalProject)
- (libraries Persistence Types batteries csv yojson)
+ (libraries batteries csv yojson)
  (instrumentation
   (backend bisect_ppx))
  (preprocess
