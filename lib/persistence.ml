@@ -3,9 +3,6 @@ open Types
 (* Filename for file that stores master password in hashed form *)
 let masterpwd_file_path = "data/unencrypted/masterpwd"
 
-(** Filename for file that stores all passwords in hashed form. Deprecated. *)
-let pwd_file_path = "data/encrypted/encryptables"
-
 (** Filename for file that stores all encrypted data. Invariant: this data
     matches the schema in schemas/encryptables-schema.json *)
 let encrypted_file_path = "data/encrypted/encryptables"
@@ -14,7 +11,7 @@ let encrypted_file_path = "data/encrypted/encryptables"
     owner. *)
 let set_file_perms () =
   Unix.chmod masterpwd_file_path 0o600;
-  Unix.chmod pwd_file_path 0o600
+  Unix.chmod encrypted_file_path 0o600
 
 (* Precondition: the hash is in the first line of [masterpwd_file_path]. *)
 let read_master_password_hash () =
@@ -72,4 +69,4 @@ let delete_encryptable_by_name encrypt_val_name =
       (fun (EncryptedString { encrypted_data; _ }) -> encrypted_data)
       encrypted_filtered_list
   in
-  BatFile.write_lines pwd_file_path (BatList.enum encrypted_filtered_lines)
+  BatFile.write_lines encrypted_file_path (BatList.enum encrypted_filtered_lines)
