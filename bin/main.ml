@@ -108,12 +108,27 @@ let rec logged_in_loop () =
   | "gen_password" ->
       gen_password_val ();
       logged_in_loop ()
-  | "add" ->
+  | "add" -> 
+    print_endline "Usage: add [pwd|login].\nRun add pwd if you would like to add a password, and add login if you would like to add a login";
+    logged_in_loop ()
+  | "add pwd" ->
       print_endline "What would you like to name this password?";
       let name = read_line () in
       print_endline "Enter the password:";
       let password = get_hidden_input () in
       let encryptable = Types.Password { name; password } in
+      Persistence.write_encryptable encryptable;
+      logged_in_loop ()
+  | "add login" ->
+      print_endline "What would you like to name this login?";
+      let name = read_line () in
+      print_endline "Enter the username:";
+      let username = read_line () in
+      print_endline "Enter the password:";
+      let password = get_hidden_input () in
+      print_endline "Enter the url, or press enter to skip:";
+      let url = get_hidden_input () |> Util.non_empty_or_none in
+      let encryptable = Types.Login { name; username; password; url } in
       Persistence.write_encryptable encryptable;
       logged_in_loop ()
   | "setpwd" ->
