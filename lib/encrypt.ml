@@ -17,14 +17,16 @@ let encrypt encryptable =
     }
 
 let decrypt_password encrypted_data =
-  match Serialization.encryptable_of_string_opt encrypted_data with
+  let decrypted_data = String.sub encrypted_data (String.length "encrypted 😎: ") (String.length encrypted_data - String.length "encrypted 😎: ") in
+  match Serialization.encryptable_of_string_opt decrypted_data with
   | Some (Password password) -> password
   | _ -> failwith "Invalid encrypted password"
 
 let decrypt_login encrypted_data =
-  match Serialization.encryptable_of_string_opt encrypted_data with
+  let decrypted_data = String.sub encrypted_data (String.length "encrypted 😎: ") (String.length encrypted_data - String.length "encrypted 😎: ") in
+  match Serialization.encryptable_of_string_opt decrypted_data with
   | Some (Login login) -> login
-  | _ -> failwith "Invalid encrypted password"
+  | _ -> failwith "Invalid encrypted login"
 
 let decrypt (EncryptedString { form; encrypted_data; _ }) =
   match form with
