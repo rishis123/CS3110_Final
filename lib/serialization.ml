@@ -57,3 +57,33 @@ let encryptable_of_string_opt str =
   | `Assoc [ ("name", `String name); ("password", `String password) ] ->
       Some (Password { name; password })
   | _ -> None
+
+let json_of_encrypted_form : encrypted_form -> Yojson.Basic.t = function
+  | EncryptedPassword -> `String "password"
+  | EncryptedLogin -> `String "login"
+
+let encrypted_form_of_json : Yojson.Basic.t -> encrypted_form = function
+  | `String "password" -> EncryptedPassword
+  | `String "login" -> EncryptedLogin
+  | _ -> failwith "Invalid form"
+
+let json_of_encrypted (EncryptedString { form; name; encrypted_data }) :
+    Yojson.Basic.t =
+  `Assoc
+    [
+      ("form", json_of_encrypted_form form);
+      ("name", `String name);
+      ("encrypted_data", `String encrypted_data);
+    ]
+
+let encrypted_of_json (json : Yojson.Basic.t) =
+  match json with
+  | `Assoc
+      [
+        ("form", form);
+        ("name", `String name);
+        ("encrypted_data", `String encrypted_data);
+      ] ->
+      EncryptedString
+        { form = encrypted_form_of_json form; name; encrypted_data }
+  | _ -> failwith "Cannot parse into encrypted; invalid format"

@@ -26,6 +26,10 @@ type encryptable =
   | Password of password
   | Login of login
 
+let name_of_encryptable = function
+  | Password { name; _ } -> name
+  | Login { name; _ } -> name
+
 (** [string_of_password p] is a string representation of [p] for logging or
     debugging. *)
 let string_of_password (p : password) : string =
@@ -56,3 +60,14 @@ let string_of_master_password_hash (h : master_password_hash) : string = h
     debugging. *)
 let string_of_unencryptable : unencryptable -> string = function
   | MasterPasswordHash h -> string_of_master_password_hash h
+
+type encrypted_form =
+  | EncryptedLogin
+  | EncryptedPassword
+
+type encrypted =
+  | EncryptedString of {
+      form : encrypted_form;
+      name : string;
+      encrypted_data : string;
+    }

@@ -1,0 +1,26 @@
+{
+    "type": "object",
+    "properties": {
+        "form": {
+            "enum": [
+                "login",
+                "password"
+            ],
+            "description": "The type of the entry"
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the entry"
+        },
+        "encrypted_data": {
+            "type": "string",
+            "description": "An encrypted string representing the entry"
+        }
+    },
+    "required": [
+        "form",
+        "name",
+        "encrypted_data"
+    ],
+    "additionalProperties": false
+}

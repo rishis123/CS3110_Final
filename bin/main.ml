@@ -2,19 +2,13 @@ open FinalProject
 
 let login_procedure pwd =
   if FinalProject.MasterPassword.check_master pwd then
-    let () = FinalProject.Encrypt.set_key pwd in
+    let () = Encrypt.set_key pwd in
     true
   else false
 
 let quit_procedure () =
   print_endline "Exited the program";
   exit 0
-
-(** [set_file_perms] sets the data files to read and write allowed only for the
-    owner. *)
-let set_file_perms () =
-  Unix.chmod "data/masterpwd" 0o600;
-  Unix.chmod "data/pwd" 0o600
 
 let help_msg =
   "Here are the available commands:\n\
@@ -97,40 +91,53 @@ let rec logged_in_loop () =
       print_endline help_msg;
       logged_in_loop ()
   | "list" ->
-      let pwd_list = FinalProject.Persistence.read_all_encryptable () in
+      let pwd_list = Persistence.read_all_encryptable () in
       List.iter
-        (fun x ->
-          print_endline (FinalProject.Serialization.encryptable_to_string x))
+        (fun x -> print_endline (Types.string_of_encryptable x))
         pwd_list;
       logged_in_loop ()
   | "findsing" ->
       let desired = read_line () in
       let autocomplete : Types.encryptable list =
-        FinalProject.Persistence.autocomplete desired
+        Autocomplete.autocomplete desired
       in
       List.iter
-        (fun x ->
-          print_endline (FinalProject.Serialization.encryptable_to_string x))
+        (fun x -> print_endline (Types.string_of_encryptable x))
         autocomplete;
       logged_in_loop ()
   | "gen_password" ->
       gen_password_val ();
       logged_in_loop ()
-  | "add" ->
+  | "add" -> 
+    print_endline "Usage: add [pwd|login].\nRun add pwd if you would like to add a password, and add login if you would like to add a login";
+    logged_in_loop ()
+  | "add pwd" ->
       print_endline "What would you like to name this password?";
       let name = read_line () in
       print_endline "Enter the password:";
       let password = get_hidden_input () in
-      let encryptable = FinalProject.Types.Password { name; password } in
-      FinalProject.Persistence.write_encryptable encryptable;
+      let encryptable = Types.Password { name; password } in
+      Persistence.write_encryptable encryptable;
+      logged_in_loop ()
+  | "add login" ->
+      print_endline "What would you like to name this login?";
+      let name = read_line () in
+      print_endline "Enter the username:";
+      let username = read_line () in
+      print_endline "Enter the password:";
+      let password = get_hidden_input () in
+      print_endline "Enter the url, or press enter to skip:";
+      let url = get_hidden_input () |> Util.non_empty_or_none in
+      let encryptable = Types.Login { name; username; password; url } in
+      Persistence.write_encryptable encryptable;
       logged_in_loop ()
   | "setpwd" ->
       print_endline "Type a new password: ";
       let newpwd = get_hidden_input () in
       (* Salt & Hash -> Convert ot MasterPasswordHash type*)
-      let master_pwd = FinalProject.Encrypt.salt_hash newpwd in
+      let master_pwd = Encrypt.salt_hash newpwd in
 
-      let () = FinalProject.Persistence.write_unencryptable master_pwd in
+      let () = Persistence.write_unencryptable master_pwd in
       print_endline ("The password input was :" ^ newpwd)
   | "export" ->
       print_endline "Type the path to which you would like to export: ";
@@ -151,7 +158,7 @@ let rec logged_in_loop () =
       logged_in_loop ()
 
 let rec main_loop () =
-  set_file_perms ();
+  Persistence.set_file_perms ();
   print_endline "Type a command:";
   let input = read_line () in
   match input with
