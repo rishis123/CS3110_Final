@@ -7,16 +7,26 @@ open FinalProject
 let btn_font_size = 18
 let btn_border_radius = 10
 let window_width = 400
+
+(** Buttons that change views need "signal" widgets, which are empty widgets
+    used to recieve Update.push signals to trigger view changes. *)
 let login_signal = W.empty ~w:0 ~h:0 ()
+
 let add_signal = W.empty ~w:0 ~h:0 ()
 
-let create_connection signal layout new_view =
+(** [create_connection signal old_view new_view] creates a connection such that
+    when [Update.push signal] is called, the view changes from [oldview] to
+    [newview]. *)
+let create_connection signal old_view new_view =
   W.connect_main signal signal
     (fun _ _ _ ->
-      L.set_rooms layout [ new_view ];
-      Sync.push (fun () -> L.fit_content ~sep:0 layout))
+      L.set_rooms old_view [ new_view ];
+      Sync.push (fun () -> L.fit_content ~sep:0 new_view))
     [ Trigger.update ]
 
+(** [create_btn s f] creates a button with label text [s] that does [f] when
+    clicked. Note: This function does not create a connection, which is
+    necessary if the button changes the view. *)
 let create_btn s f =
   W.button
     ~label:(Label.create ~size:btn_font_size s)
@@ -24,6 +34,7 @@ let create_btn s f =
     ~action:(fun _ -> f ())
     ""
 
+(** [add_view] is the view shown when the user adds a new password. *)
 let add_view =
   let name_input =
     W.text_input ~size:30 ~max_size:200 ~prompt:"Enter password name" ()
@@ -41,6 +52,7 @@ let add_view =
       L.resident ~w:window_width ~h:200 add_btn;
     ]
 
+(** [home_view] is the view shown right after the user logs in. *)
 let home_view =
   let label = W.label ~size:40 "You are signed in!" in
   let add_btn =
@@ -88,12 +100,16 @@ let login_view =
       L.resident ~w:window_width ~h:200 label;
     ]
 
+(** [connections] is the list of connections for events. A connection indicates
+    what should happen when a widget receives [Update.push]. *)
 let connections =
   [
     create_connection login_signal login_view home_view;
     create_connection add_signal home_view add_view;
   ]
 
+(** [main ()] is Bogue's main loop. It will display this board until the window
+    is closed. *)
 let main () =
   let board = Bogue.of_layout ~connections login_view in
   Bogue.run board
