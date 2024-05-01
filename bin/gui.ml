@@ -4,7 +4,10 @@ module L = Layout
 module T = Trigger
 open FinalProject
 
+(** Constants controlling visual aspects of the gui such as font size and
+    colors. *)
 let btn_font_size = 18
+
 let btn_border_radius = 10
 let window_width = 400
 let label_text_size = 18
@@ -15,16 +18,7 @@ let login_signal = W.empty ~w:0 ~h:0 ()
 
 let add_signal = W.empty ~w:0 ~h:0 ()
 let add_complete_signal = W.empty ~w:0 ~h:0 ()
-
-(** [create_connection signal old_view new_view] creates a connection such that
-    when [Update.push signal] is called, the view changes from [oldview] to
-    [newview]. *)
-let create_connection signal old_view new_view =
-  W.connect_main signal signal
-    (fun _ _ _ ->
-      L.set_rooms old_view [ new_view ];
-      Sync.push (fun () -> L.fit_content ~sep:0 new_view))
-    [ Trigger.update ]
+let back_home_signal = W.empty ~w:0 ~h:0 ()
 
 (** [create_btn s f] creates a button with label text [s] that does [f] when
     clicked. Note: This function does not create a connection, which is
@@ -42,7 +36,7 @@ let create_btn s f =
 let action_complete_view msg =
   let label = W.label ~size:label_text_size msg in
   let back_btn =
-    create_btn "Back to home" (fun () -> print_endline "Go back home")
+    create_btn "Back to home" (fun () -> Update.push back_home_signal)
   in
   L.tower
     [ L.resident ~w:window_width label; L.resident ~w:window_width back_btn ]
@@ -124,22 +118,35 @@ let login_view =
       L.resident ~w:window_width ~h:200 label;
     ]
 
+let master_layout = L.tower [ login_view ]
+
+(** [create_connection signal new_view] creates a connection such that when
+    [Update.push signal] is called, the view changes to [newview]. *)
+let create_connection signal new_view =
+  W.connect_main signal signal
+    (fun _ _ _ ->
+      L.set_rooms master_layout [ new_view ];
+      Sync.push (fun () -> L.fit_content ~sep:0 new_view))
+    [ Trigger.update ]
+
 (** [connections] is the list of connections for events. A connection indicates
     what should happen when a widget receives [Update.push]. *)
 let connections =
   [
-    create_connection login_signal login_view home_view;
-    create_connection add_signal home_view add_view;
-    create_connection add_complete_signal add_view
+    create_connection login_signal home_view;
+    create_connection add_signal add_view;
+    create_connection add_complete_signal
       (action_complete_view "Password added");
+    create_connection back_home_signal home_view;
   ]
 
 (** [main ()] is Bogue's main loop. It will display this board until the window
     is closed. *)
 let main () =
-  let board = Bogue.of_layout ~connections login_view in
+  let board = Bogue.of_layout ~connections master_layout in
   Bogue.run board
 
+(** Run the main loop and exit the program gracefully if the window is closed. *)
 let _ =
   main ();
   Draw.quit ()
