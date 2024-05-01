@@ -4,53 +4,44 @@ module L = Layout
 module T = Trigger
 open FinalProject
 
-(* let text_size = 18 *)
+let btn_font_size = 18
+let btn_border_radius = 10
+let window_width = 400
 let controller = W.empty ~w:0 ~h:0 ()
+
+let create_btn s f =
+  W.button
+    ~label:(Label.create ~size:btn_font_size s)
+    ~border_radius:btn_border_radius
+    ~action:(fun _ -> f ())
+    ""
 
 (** [trasition_home_view layout] changes the view to the one shown when the user
     logs in. *)
 let transition_home_view layout =
   let label = W.label ~size:40 "You are signed in!" in
-  let add_btn =
-    W.button ~border_radius:10
-      ~action:(fun _ -> print_endline "add btn pressed")
-      "Add a password"
-  in
-  let list_btn =
-    W.button ~border_radius:10
-      ~action:(fun _ -> print_endline "list btn pressed")
-      "Show passwords"
-  in
-  let gen_btn =
-    W.button ~border_radius:10
-      ~action:(fun _ -> print_endline "gen btn pressed")
-      "Generate a password"
-  in
-  let set_pwd_btn =
-    W.button ~border_radius:10
-      ~action:(fun _ -> print_endline "set btn pressed")
-      "Set the master password"
-  in
-  let import_btn =
-    W.button ~border_radius:10
-      ~action:(fun _ -> print_endline "import btn pressed")
-      "Import passwords"
-  in
-  let export_btn =
-    W.button ~border_radius:10
-      ~action:(fun _ -> print_endline "export btn pressed")
-      "Export passwords"
-  in
   let new_layout =
     L.tower
       [
-        L.resident ~w:400 ~h:200 label;
-        L.resident ~w:400 add_btn;
-        L.resident ~w:400 list_btn;
-        L.resident ~w:400 gen_btn;
-        L.resident ~w:400 set_pwd_btn;
-        L.resident ~w:400 import_btn;
-        L.resident ~w:400 export_btn;
+        L.resident ~w:window_width ~h:200 label;
+        L.resident ~w:window_width
+          (create_btn "Add a password" (fun () ->
+               print_endline "add btn pressed"));
+        L.resident ~w:window_width
+          (create_btn "List passwords" (fun () ->
+               print_endline "list btn pressed"));
+        L.resident ~w:window_width
+          (create_btn "Generate a password" (fun () ->
+               print_endline "gen btn pressed"));
+        L.resident ~w:window_width
+          (create_btn "Set the master password" (fun () ->
+               print_endline "setpwd btn pressed"));
+        L.resident ~w:window_width
+          (create_btn "Import passwords" (fun () ->
+               print_endline "import btn pressed"));
+        L.resident ~w:window_width
+          (create_btn "Export a password" (fun () ->
+               print_endline "Export btn pressed"));
       ]
   in
   L.set_rooms layout [ new_layout ];
@@ -63,21 +54,19 @@ let login_view =
   in
   let label = W.label ~size:40 "Hello! Please log in" in
   let login_btn =
-    W.button ~border_radius:10
-      ~action:(fun _ ->
+    create_btn "Login" (fun () ->
         let pwd = W.get_text input in
         if MasterPassword.check_master pwd then
           let () = Encrypt.set_key pwd in
           Update.push controller
         else W.set_text label "Password incorrect")
-      "Login"
   in
   let layout =
     L.tower
       [
-        L.resident ~w:400 input;
-        L.resident ~w:400 login_btn;
-        L.resident ~w:400 ~h:200 label;
+        L.resident ~w:window_width input;
+        L.resident ~w:window_width login_btn;
+        L.resident ~w:window_width ~h:200 label;
       ]
   in
   let c =
