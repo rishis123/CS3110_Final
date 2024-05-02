@@ -69,9 +69,11 @@ let rec logged_in_loop () =
       let autocomplete : Types.encryptable list =
         Autocomplete.autocomplete desired
       in
-      List.iter
-        (fun x -> print_endline (Types.string_of_encryptable x))
-        autocomplete;
+      if List.length autocomplete = 0 then print_endline "No matches"
+      else
+        List.iter
+          (fun x -> print_endline (Types.string_of_encryptable x))
+          autocomplete;
       logged_in_loop ()
   | "gen_password" ->
       let () = print_endline (Gen_password.gen_password_val ()) in
