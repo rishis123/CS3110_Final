@@ -33,13 +33,19 @@ let get_hidden_input () =
   Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
   input
 
-(** Timer for [n] seconds -- helps maintain security.*)
-let rec timer n =
-  if n = 0 then quit_procedure ()
-  else (
-    Unix.sleep 1;
-    (* Sleep for 1 second *)
-    timer (n - 1))
+(** Asynchronous timer for [n] seconds -- helps maintain security.*)
+let timer n =
+  let rec countdown remaining =
+    if remaining <= 0 then (
+      print_endline "Time's up!";
+      (* to notify user why program has quit.*)
+      quit_procedure ())
+    else (
+      Unix.sleep 1;
+      countdown (remaining - 1))
+  in
+  let _ = Thread.create countdown n in
+  ()
 
 let rec logged_in_loop () =
   print_endline "Type a command. You have 5 minutes:";
