@@ -13,14 +13,14 @@ let set_file_perms () =
   Unix.chmod masterpwd_file_path 0o600;
   Unix.chmod encrypted_file_path 0o600
 
-(* Precondition: the hash is in the first line of [masterpwd_file_path]. *)
+(** Precondition: the hash is in the first line of [masterpwd_file_path]. *)
 let read_master_password_hash () =
   let lines = BatList.of_enum (BatFile.lines_of masterpwd_file_path) in
   let hash = BatList.hd lines in
   hash
 
 (* Write unencryptable information i.e. master password to memory for first
-   time. Presumably passed in in hashed from. *)
+   time. Presumably passed into function in hashed form. *)
 let write_unencryptable master_value =
   match master_value with
   | Types.MasterPasswordHash hash ->

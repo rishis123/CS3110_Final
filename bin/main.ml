@@ -11,15 +11,14 @@ let quit_procedure () =
   exit 0
 
 let help_msg =
-  "Here are the available commands:\n\
-   login: Log into the password manager. Must be logged in to use other \
-   commands.\n\
+  "Here are the available commands:\n\n\
    add: Add a new password.\n\
    list: List saved passwords.\n\
    findsing: Autocompletes given name and lists relevant password or login \
    information \n\
+   check_strength: Checks if your password is at risk or not.\n\
    gen_password: Generates password with choice\n\
-  \   setpwd: Change the master password.\n\
+   setpwd: Change the master password.\n\
    import: Import passwords from an existing file.\n\
    export: Export passwords form an existing file. Warning: Exporting \
    passwords will export decrypted data to a file.\n\
@@ -33,54 +32,6 @@ let get_hidden_input () =
   settings.c_echo <- true;
   Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
   input
-
-let rec generate_password_with_special index acc =
-  if index <= 0 then acc
-  else
-    let range_choice = Random.int 4 in
-    let char_val =
-      match range_choice with
-      | 0 -> Char.chr (97 + Random.int 26) (* lowercase letters (a-z) *)
-      | 1 -> Char.chr (65 + Random.int 26) (* uppercase letters (A-Z) *)
-      | 2 -> Char.chr (48 + Random.int 10) (* digits (0-9) *)
-      | _ -> Char.chr (Array.get [| 35; 36; 38 |] (Random.int 3))
-      (* symbols (#, $, &) *)
-    in
-    generate_password_with_special (index - 1) (char_val :: acc)
-
-let rec generate_password_without_special index acc =
-  if index <= 0 then acc
-  else
-    let range_choice = Random.int 3 in
-    let char_val =
-      match range_choice with
-      | 0 -> Char.chr (97 + Random.int 26) (* lowercase letters (a-z) *)
-      | 1 -> Char.chr (65 + Random.int 26) (* uppercase letters (A-Z) *)
-      | _ -> Char.chr (48 + Random.int 10)
-      (* digits (0-9) *)
-    in
-    generate_password_without_special (index - 1) (char_val :: acc)
-
-let gen_password_val () =
-  print_endline "Choose password length:";
-  let length_choice = int_of_string (read_line ()) in
-
-  print_endline "Allow special characters?";
-  print_endline "1. Yes";
-  print_endline "2. No";
-  let special_choice = int_of_string (read_line ()) in
-
-  (* printing string representation of the returned char list*)
-  match (length_choice, special_choice) with
-  | len, 1 ->
-      print_endline
-        (String.concat ""
-           (List.map Char.escaped (generate_password_with_special len [])))
-  | len, 2 ->
-      print_endline
-        (String.concat ""
-           (List.map Char.escaped (generate_password_without_special len [])))
-  | _ -> print_endline "Invalid response."
 
 let rec logged_in_loop () =
   print_endline "Type a command:";
@@ -97,6 +48,7 @@ let rec logged_in_loop () =
         pwd_list;
       logged_in_loop ()
   | "findsing" ->
+      print_endline "Enter what you think the name of your password or login is";
       let desired = read_line () in
       let autocomplete : Types.encryptable list =
         Autocomplete.autocomplete desired
@@ -106,11 +58,14 @@ let rec logged_in_loop () =
         autocomplete;
       logged_in_loop ()
   | "gen_password" ->
-      gen_password_val ();
+      let () = print_endline (Gen_password.gen_password_val ()) in
       logged_in_loop ()
-  | "add" -> 
-    print_endline "Usage: add [pwd|login].\nRun add pwd if you would like to add a password, and add login if you would like to add a login";
-    logged_in_loop ()
+  | "add" ->
+      print_endline
+        "Usage: add [pwd|login].\n\
+         Run add pwd if you would like to add a password, and add login if you \
+         would like to add a login";
+      logged_in_loop ()
   | "add pwd" ->
       print_endline "What would you like to name this password?";
       let name = read_line () in
@@ -139,6 +94,15 @@ let rec logged_in_loop () =
 
       let () = Persistence.write_unencryptable master_pwd in
       print_endline ("The password input was :" ^ newpwd)
+  | "check_strength" ->
+      print_endline "Enter your existing password.";
+      let existing = read_line () in
+      if Autocomplete.check_strength existing then
+        print_endline
+          "Your password is a security risk -- try one of our randomly \
+           generated passwords by calling gen_password"
+      else print_endline "Your password is fine!";
+      logged_in_loop ()
   | "export" ->
       print_endline "Type the path to which you would like to export: ";
       let path = read_line () in
@@ -159,12 +123,12 @@ let rec logged_in_loop () =
 
 let rec main_loop () =
   Persistence.set_file_perms ();
-  print_endline "Type a command:";
+  print_endline "Type a command -- quit, help, or login:";
   let input = read_line () in
   match input with
   | "quit" -> quit_procedure ()
   | "help" ->
-      print_endline help_msg;
+      print_endline "Must login before accessing other functionalities";
       main_loop ()
   | "login" -> begin
       print_endline "Type your master password:";
@@ -186,6 +150,7 @@ let rec main_loop () =
         || x = "setpwd"
         || x = "import"
         || x = "export"
+        || x = "check_strength"
       then
         let () =
           print_endline
