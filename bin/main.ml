@@ -33,8 +33,17 @@ let get_hidden_input () =
   Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
   input
 
+(** Timer for [n] seconds -- helps maintain security.*)
+let rec timer n =
+  if n = 0 then quit_procedure ()
+  else (
+    Unix.sleep 1;
+    (* Sleep for 1 second *)
+    timer (n - 1))
+
 let rec logged_in_loop () =
-  print_endline "Type a command:";
+  print_endline "Type a command. You have 5 minutes:";
+  let () = timer 300 in
   let input = read_line () in
   match input with
   | "quit" -> quit_procedure ()
