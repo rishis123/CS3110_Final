@@ -54,7 +54,7 @@ let string_of_encryptable : encryptable -> string = function
 
 (** [string_of_master_password_hash h] is a string representation of [h] for
     logging or debugging. *)
-let string_of_master_password_hash (h : master_password_hash) : string = h
+let string_of_master_password_hash h : string = h
 
 (** [string_of_unencryptable u] is a string representation of [u] for logging or
     debugging. *)

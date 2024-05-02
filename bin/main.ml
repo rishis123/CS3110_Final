@@ -17,6 +17,7 @@ let help_msg =
    findsing: Autocompletes given name and lists relevant password or login \
    information \n\
    check_strength: Checks if your password is at risk or not.\n\
+   health_check: Checks saved passwords for health or duplicates \n\
    gen_password: Generates password with choice\n\
    setpwd: Change the master password.\n\
    import: Import passwords from an existing file.\n\
@@ -118,6 +119,39 @@ let rec logged_in_loop () =
            generated passwords by calling gen_password"
       else print_endline "Your password is fine!";
       logged_in_loop ()
+  | "health_check" ->
+      let check_vulnerabilities () =
+        let pwd_list = Persistence.read_all_encryptable () in
+
+        let get_only_passwords (pwd : Types.encryptable) =
+          match pwd with
+          | Types.Login l -> Types.string_of_master_password_hash l.password
+          | Types.Password p -> Types.string_of_master_password_hash p.password
+        in
+        let get_only_names (pwd : Types.encryptable) : string =
+          match pwd with
+          | Types.Login l -> Types.string_of_master_password_hash l.name
+          | Types.Password p -> Types.string_of_master_password_hash p.name
+        in
+        let string_pwd_list = List.map get_only_passwords pwd_list in
+        let len = List.length string_pwd_list in
+        let vulnerable = ref [] in
+
+        (* we just want to modify this one ref rather than return a new list for
+           each iteration of the loop*)
+        for i = 0 to len - 1 do
+          let password_entry = List.nth string_pwd_list i in
+          if Autocomplete.check_strength password_entry then
+            vulnerable := get_only_names (List.nth pwd_list i) :: !vulnerable
+        done;
+        !vulnerable
+      in
+      let output_lst = check_vulnerabilities () in
+      let output_printer str =
+        Printf.printf "Your password or login %s is not secure\n" str;
+        ()
+      in
+      List.iter output_printer output_lst
   | "export" ->
       print_endline "Type the path to which you would like to export: ";
       let path = read_line () in
@@ -166,6 +200,7 @@ let rec main_loop () =
         || x = "import"
         || x = "export"
         || x = "check_strength"
+        || x = "health_check"
       then
         let () =
           print_endline
