@@ -33,18 +33,18 @@ let name_of_encryptable = function
 (** [string_of_password p] is a string representation of [p] for logging or
     debugging. *)
 let string_of_password (p : password) : string =
-  Printf.sprintf "P{ name=%s; password=%s }" p.name p.password
+  Printf.sprintf "P{ name = %s; password = %s }" p.name p.password
 
 (** [string_of_login l] is a string representation of [l] for logging or
     debugging. *)
 let string_of_login (l : login) : string =
   match l.url with
   | None ->
-      Printf.sprintf "L{ name=%s; username=%s; password=%s; [no url] }" l.name
-        l.username l.password
+      Printf.sprintf "L{ name = %s; username = %s; password = %s; [no url] }"
+        l.name l.username l.password
   | Some url ->
-      Printf.sprintf "L{ name=%s; username=%s; password=%s; url=%s }" l.name
-        l.username l.password url
+      Printf.sprintf "L{ name = %s; username = %s; password = %s; url = %s }"
+        l.name l.username l.password url
 
 (** [string_of_encryptable e] is a string representation of [e] for logging or
     debugging. *)
