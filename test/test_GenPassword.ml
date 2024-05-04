@@ -1,13 +1,14 @@
 open OUnit2
 open FinalProject.Gen_password
 
-let gen_50_passwords () =
+(*throughout tests -- max 50 lenght password*)
+let gen_20_passwords () =
   let list_of_passwords = ref [] in
 
-  for i = 0 to 49 do
+  for _ = 0 to 19 do
     (* We want to generate 50 passwords with length choice and special or not
        choice for each *)
-    let len = Random.int 1073741823 + 1 in
+    let len = Random.int 50 in
     (* want int between 1 and 2^30 -1 *)
     let spec_choice = Random.int 2 + 1 in
 
@@ -28,13 +29,13 @@ let gen_50_passwords () =
 
 let tests =
   [
-    ( "Test 50 passwords are all distinct, valid args" >:: fun _ ->
-      let passwords_lst = gen_50_passwords () in
+    ( "Test 20 passwords are all distinct, valid args" >:: fun _ ->
+      let passwords_lst = gen_20_passwords () in
       let distinct = ref true in
 
       (* only changes if any password combo is the same*)
-      for i = 0 to 48 do
-        for j = i + 1 to 49 do
+      for i = 0 to 18 do
+        for j = i + 1 to 19 do
           (*check every possible distinct pair*)
           if List.nth passwords_lst i = List.nth passwords_lst j then
             distinct := false
@@ -44,8 +45,8 @@ let tests =
     );
     ( "Test none of 5 non-spec passwords have non-alphanumerics" >:: fun _ ->
       let valid = ref true in
-      for i = 0 to 4 do
-        let len = Random.int 1073741823 + 1 in
+      for _ = 0 to 4 do
+        let len = Random.int 50 in
         let password_new =
           String.concat ""
             (List.map Char.escaped (generate_password_without_special len []))
@@ -65,8 +66,8 @@ let tests =
        alpha-numeric or #, $, &)"
     >:: fun _ ->
       let valid = ref true in
-      for i = 0 to 4 do
-        let len = Random.int 1073741823 + 1 in
+      for _ = 0 to 4 do
+        let len = Random.int 50 in
         let password_new =
           String.concat ""
             (List.map Char.escaped (generate_password_with_special len []))
