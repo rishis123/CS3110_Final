@@ -160,5 +160,7 @@ let common_passwords =
     "matrix";
   ]
 
+(* returns true if any overlap exists between the passed in word and the common
+   passwords*)
 let check_strength password_entry =
   List.exists (compare_words password_entry) common_passwords
