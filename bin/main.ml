@@ -33,144 +33,137 @@ let get_hidden_input () =
   settings.c_echo <- true;
   Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
   input
+  
+let help_procedure () = print_endline help_msg
 
-(** Asynchronous timer for [n] seconds -- helps maintain security.*)
-let timer n =
-  let rec countdown remaining =
-    if remaining <= 0 then (
-      print_endline "Time's up!";
-      (* to notify user why program has quit.*)
-      quit_procedure ())
-    else (
-      Unix.sleep 1;
-      countdown (remaining - 1))
+let list_procedure () =
+  let pwd_list = Persistence.read_all_encryptable () in
+  List.iter (fun x -> print_endline (Types.string_of_encryptable x)) pwd_list
+
+let findsing_procedure () =
+  print_endline "Enter what you think the name of your password or login is";
+  let desired = read_line () in
+  let autocomplete : Types.encryptable list =
+    Autocomplete.autocomplete desired
   in
-  let _ = Thread.create countdown n in
-  ()
+  if List.length autocomplete = 0 then print_endline "No matches"
+  else
+    List.iter
+      (fun x -> print_endline (Types.string_of_encryptable x))
+      autocomplete
 
-let rec logged_in_loop () =
-  print_endline "Type a command. You have 5 minutes:";
-  let () = timer 300 in
-  let input = read_line () in
-  match input with
-  | "quit" -> quit_procedure ()
-  | "help" ->
-      print_endline help_msg;
-      logged_in_loop ()
-  | "list" ->
-      let pwd_list = Persistence.read_all_encryptable () in
-      List.iter
-        (fun x -> print_endline (Types.string_of_encryptable x))
-        pwd_list;
-      logged_in_loop ()
-  | "findsing" ->
-      print_endline "Enter what you think the name of your password or login is";
-      let desired = read_line () in
-      let autocomplete : Types.encryptable list =
-        Autocomplete.autocomplete desired
-      in
-      if List.length autocomplete = 0 then print_endline "No matches"
-      else
-        List.iter
-          (fun x -> print_endline (Types.string_of_encryptable x))
-          autocomplete;
-      logged_in_loop ()
-  | "gen_password" ->
-      let () = print_endline (Gen_password.gen_password_val ()) in
-      logged_in_loop ()
-  | "add" ->
-      print_endline
-        "Usage: add [pwd|login].\n\
-         Run add pwd if you would like to add a password, and add login if you \
-         would like to add a login";
-      logged_in_loop ()
-  | "add pwd" ->
-      print_endline "What would you like to name this password?";
-      let name = read_line () in
-      print_endline "Enter the password:";
-      let password = get_hidden_input () in
-      let encryptable = Types.Password { name; password } in
-      Persistence.write_encryptable encryptable;
-      logged_in_loop ()
-  | "add login" ->
-      print_endline "What would you like to name this login?";
-      let name = read_line () in
-      print_endline "Enter the username:";
-      let username = read_line () in
-      print_endline "Enter the password:";
-      let password = get_hidden_input () in
-      print_endline "Enter the url, or press enter to skip:";
-      let url = get_hidden_input () |> Util.non_empty_or_none in
-      let encryptable = Types.Login { name; username; password; url } in
-      Persistence.write_encryptable encryptable;
-      logged_in_loop ()
-  | "setpwd" ->
-      print_endline "Type a new password: ";
-      let newpwd = get_hidden_input () in
-      (* Salt & Hash -> Convert ot MasterPasswordHash type*)
-      let master_pwd = Encrypt.salt_hash newpwd in
+let gen_password_procedure () = print_endline (Gen_password.gen_password_val ())
 
-      let () = Persistence.write_unencryptable master_pwd in
-      print_endline ("The password input was :" ^ newpwd)
-  | "check_strength" ->
-      print_endline "Enter your existing password.";
-      let existing = read_line () in
-      if Autocomplete.check_strength existing then
-        print_endline
-          "Your password is a security risk -- try one of our randomly \
-           generated passwords by calling gen_password"
-      else print_endline "Your password is fine!";
-      logged_in_loop ()
-  | "health_check" ->
-      let check_vulnerabilities () =
-        let pwd_list = Persistence.read_all_encryptable () in
+let add_procedure () =
+  print_endline
+    "Usage: add [pwd|login].\n\
+     Run add pwd if you would like to\n\
+     add a password, and add login if you would like to add a login"
 
-        let get_only_passwords (pwd : Types.encryptable) =
-          match pwd with
-          | Types.Login l -> Types.string_of_master_password_hash l.password
-          | Types.Password p -> Types.string_of_master_password_hash p.password
-        in
-        let get_only_names (pwd : Types.encryptable) : string =
-          match pwd with
-          | Types.Login l -> Types.string_of_master_password_hash l.name
-          | Types.Password p -> Types.string_of_master_password_hash p.name
-        in
-        let string_pwd_list = List.map get_only_passwords pwd_list in
-        let len = List.length string_pwd_list in
-        let vulnerable = ref [] in
+let add_password_procedure () =
+  print_endline "What would you like to name this password?";
+  let name = read_line () in
+  print_endline "Enter the password:";
+  let password = get_hidden_input () in
+  let encryptable = Types.Password { name; password } in
+  Persistence.write_encryptable encryptable
 
-        (* we just want to modify this one ref rather than return a new list for
-           each iteration of the loop*)
-        for i = 0 to len - 1 do
-          let password_entry = List.nth string_pwd_list i in
-          if Autocomplete.check_strength password_entry then
-            vulnerable := get_only_names (List.nth pwd_list i) :: !vulnerable
-        done;
-        !vulnerable
-      in
-      let output_lst = check_vulnerabilities () in
-      let output_printer str =
-        Printf.printf "Your password or login %s is not secure\n" str;
-        ()
-      in
-      List.iter output_printer output_lst
-  | "export" ->
-      print_endline "Type the path to which you would like to export: ";
-      let path = read_line () in
-      let secrets = Persistence.read_all_encryptable () in
-      PasswordImport.export secrets path;
-      Printf.printf "Passwords successfully exported to %s\n%!" path;
-      logged_in_loop ()
-  | "import" ->
-      print_endline "Type the path to the passwords you would like to import: ";
-      let path = read_line () in
-      let new_secrets = PasswordImport.import path in
-      new_secrets |> List.iter Persistence.write_encryptable;
-      Printf.printf "Passwords successfully imported from %s\n%!" path;
-      logged_in_loop ()
-  | _ ->
-      print_endline "That is not a valid command.";
-      logged_in_loop ()
+let add_login_procedure () =
+  print_endline "What would you like to name this login?";
+  let name = read_line () in
+  print_endline "Enter the username:";
+  let username = read_line () in
+  print_endline "Enter the password:";
+  let password = get_hidden_input () in
+  print_endline "Enter the url, or press enter to skip:";
+  let url = get_hidden_input () |> Util.non_empty_or_none in
+  let encryptable = Types.Login { name; username; password; url } in
+  Persistence.write_encryptable encryptable
+
+let set_pwd_procedure () =
+  print_endline "Type a new password: ";
+  let newpwd = get_hidden_input () in
+  (* Salt & Hash -> Convert ot MasterPasswordHash type*)
+  let master_pwd = Encrypt.salt_hash newpwd in
+
+  let () = Persistence.write_unencryptable master_pwd in
+  print_endline ("The password input was :" ^ newpwd)
+
+let check_strength_procedure () =
+  print_endline "Enter your existing password.";
+  let existing = read_line () in
+  if Autocomplete.check_strength existing then
+    print_endline
+      "Your password is a security risk -- try one of our randomly generated \
+       passwords by calling gen_password"
+  else print_endline "Your password is fine!"
+
+let health_check_procedure () =
+  let check_vulnerabilities () =
+    let pwd_list = Persistence.read_all_encryptable () in
+
+    let get_only_passwords (pwd : Types.encryptable) =
+      match pwd with
+      | Types.Login l -> Types.string_of_master_password_hash l.password
+      | Types.Password p -> Types.string_of_master_password_hash p.password
+    in
+    let get_only_names (pwd : Types.encryptable) : string =
+      match pwd with
+      | Types.Login l -> Types.string_of_master_password_hash l.name
+      | Types.Password p -> Types.string_of_master_password_hash p.name
+    in
+    let string_pwd_list = List.map get_only_passwords pwd_list in
+    let len = List.length string_pwd_list in
+    let vulnerable = ref [] in
+
+    (* we just want to modify this one ref rather than return a new list for
+       each iteration of the loop*)
+    for i = 0 to len - 1 do
+      let password_entry = List.nth string_pwd_list i in
+      if Autocomplete.check_strength password_entry then
+        vulnerable := get_only_names (List.nth pwd_list i) :: !vulnerable
+    done;
+    !vulnerable
+  in
+  let output_lst = check_vulnerabilities () in
+  let output_printer str =
+    Printf.printf "Your password or login %s is not secure\n" str;
+    ()
+  in
+  List.iter output_printer output_lst
+
+let export_procedure () =
+  print_endline "Type the path to which you would like to export: ";
+  let path = read_line () in
+  let secrets = Persistence.read_all_encryptable () in
+  PasswordImport.export secrets path;
+  Printf.printf "Passwords successfully exported to %s\n%!" path
+
+let import_procedure () =
+  print_endline "Type the path to the passwords you would like to import: ";
+  let path = read_line () in
+  let new_secrets = PasswordImport.import path in
+  new_secrets |> List.iter Persistence.write_encryptable;
+  Printf.printf "Passwords successfully imported from %s\n%!" path
+
+let logged_in_loop () =
+  PromptCommands.prompt_commands
+    [
+      ("quit", quit_procedure);
+      ("help", help_procedure);
+      ("list", list_procedure);
+      ("findsing", findsing_procedure);
+      ("gen_password", gen_password_procedure);
+      ("add", add_procedure);
+      ("add pwd", add_password_procedure);
+      ("add login", add_login_procedure);
+      ("setpwd", set_pwd_procedure);
+      ("check_strength", check_strength_procedure);
+      ("health_check", health_check_procedure);
+      ("export", export_procedure);
+      ("import", import_procedure);
+    ]
+    ~on_timeout:quit_procedure
 
 let rec main_loop () =
   Persistence.set_file_perms ();

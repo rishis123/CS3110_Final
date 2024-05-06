@@ -16,3 +16,6 @@ let min lst =
   | None -> failwith "No minimum exists for an empty list"
 
 let uncurry f x y = f (x, y)
+
+let fuzzy_equal x y = 
+  String.trim x = String.trim y

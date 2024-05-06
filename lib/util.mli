@@ -7,3 +7,6 @@ val min : float list -> float
 
 val uncurry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
 (** [uncurry f] returns the uncurried form of f *)
+
+val fuzzy_equal : string -> string -> bool
+(** [fuzzy_equal x y] returns whether x and y are essentially equal *)
