@@ -85,8 +85,12 @@ let set_pwd_procedure () =
   let newpwd = get_hidden_input () in
   (* Salt & Hash -> Convert ot MasterPasswordHash type*)
   let master_pwd = Encrypt.salt_hash newpwd in
-
-  let () = Persistence.write_unencryptable master_pwd in
+  let string_master_pwd = Types.string_of_unencryptable master_pwd in
+  let hashed_master_pwd =
+    MasterPassword.string_to_sha3_hash string_master_pwd
+  in
+  let unencrypt_master_pwd = Encrypt.salt_hash hashed_master_pwd in
+  let () = Persistence.write_unencryptable unencrypt_master_pwd in
   print_endline ("The password input was :" ^ newpwd)
 
 let check_strength_procedure () =
