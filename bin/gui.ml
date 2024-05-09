@@ -11,6 +11,9 @@ let btn_font_size = 18
 let btn_border_radius = 10
 let window_width = 400
 let label_text_size = 18
+let label_height = 200
+let text_input_size = 30
+let text_input_max_size = 200
 
 (** Buttons that change views need "signal" widgets, which are empty widgets
     used to recieve Update.push signals to trigger view changes. *)
@@ -31,6 +34,10 @@ let create_btn s f =
     ~action:(fun _ -> f ())
     ""
 
+(** [create_text_input s] creates a text input with prompt text [s]. *)
+let create_text_input s =
+  W.text_input ~size:text_input_size ~max_size:text_input_max_size ~prompt:s ()
+
 (** [back_btn] is a button that when pressed, returns to the home view. *)
 let back_btn =
   create_btn "Back to home" (fun () -> Update.push back_home_signal)
@@ -45,26 +52,62 @@ let action_complete_view msg =
 
 (** [add_view] is the view shown when the user adds a new password. *)
 let add_view =
-  let label = W.label ~size:label_text_size "Enter information" in
-  let name_input =
-    W.text_input ~size:30 ~max_size:200 ~prompt:"Enter password name" ()
+  let label =
+    W.rich_text ~size:label_text_size ~h:label_height
+      Text_display.(
+        page
+          [
+            para "";
+            para
+              "The name and password fields must be filled. If the url field \
+               is filled, the username field must be filled. ";
+          ])
   in
-  let pwd_input =
-    W.text_input ~size:30 ~max_size:200 ~prompt:"Enter password" ()
-  in
+  let name_input = create_text_input "Enter name" in
+  let pwd_input = create_text_input "Enter password" in
+  let username_input = create_text_input "Enter username" in
+  let url_input = create_text_input "Enter url" in
   let add_btn =
     create_btn "Add password" (fun () ->
         let name = W.get_text name_input in
+        let username = W.get_text username_input in
         let pwd = W.get_text pwd_input in
-        if String.length name > 0 && String.length pwd > 0 then (
-          let encryptable =
-            FinalProject.Types.Password { name; password = pwd }
-          in
-          FinalProject.Persistence.write_encryptable encryptable;
+        let url = W.get_text url_input in
+        let not_empty s = String.length s > 0 in
+        let erase_all_input () =
           W.set_text name_input "";
+          W.set_text username_input "";
           W.set_text pwd_input "";
+          W.set_text url_input ""
+        in
+        if
+          not_empty name && not_empty username && not_empty pwd && not_empty url
+        then (
+          Persistence.write_encryptable
+            (Types.Login { name; username; password = pwd; url = Some url });
+          erase_all_input ();
           Update.push add_complete_signal)
-        else W.set_text label "Fields must not be empty")
+        else if
+          not_empty name
+          && not_empty username
+          && not_empty pwd
+          && not (not_empty url)
+        then (
+          Persistence.write_encryptable
+            (Types.Login { name; username; password = pwd; url = None });
+          erase_all_input ();
+          Update.push add_complete_signal)
+        else if
+          not_empty name
+          && not_empty pwd
+          && (not (not_empty username))
+          && not (not_empty url)
+        then (
+          let encryptable = Types.Password { name; password = pwd } in
+          Persistence.write_encryptable encryptable;
+          erase_all_input ();
+          Update.push add_complete_signal)
+        else ignore ())
   in
   let cancel_btn =
     create_btn "Cancel" (fun () ->
@@ -75,10 +118,12 @@ let add_view =
   L.tower
     [
       L.resident ~w:window_width name_input;
+      L.resident ~w:window_width username_input;
       L.resident ~w:window_width pwd_input;
+      L.resident ~w:window_width url_input;
       L.resident ~w:window_width add_btn;
       L.resident ~w:window_width cancel_btn;
-      L.resident ~w:window_width ~h:200 label;
+      L.resident ~w:window_width ~h:label_height label;
     ]
 
 (** [list_view] is the view shown when the user lists all passwords. *)
@@ -141,7 +186,7 @@ let home_view =
   let list_btn = create_btn "List logins" (fun () -> Update.push list_signal) in
   L.tower
     [
-      L.resident ~w:window_width ~h:200 label;
+      L.resident ~w:window_width ~h:label_height label;
       L.resident ~w:window_width add_btn;
       L.resident ~w:window_width list_btn;
       L.resident ~w:window_width
@@ -160,10 +205,8 @@ let home_view =
 
 (** [login_view] is the view shown before the user logs in *)
 let login_view =
-  let input =
-    W.text_input ~size:30 ~max_size:200 ~prompt:"Enter master password" ()
-  in
-  let label = W.label ~size:label_text_size "Hello! Please log in" in
+  let input = create_text_input "Enter master password" in
+  let label = W.label ~size:label_text_size "Hello! Please log in." in
   let login_btn =
     create_btn "Login" (fun () ->
         let pwd = W.get_text input in
@@ -177,7 +220,7 @@ let login_view =
     [
       L.resident ~w:window_width input;
       L.resident ~w:window_width login_btn;
-      L.resident ~w:window_width ~h:200 label;
+      L.resident ~w:window_width ~h:label_height label;
     ]
 
 let master_layout = L.tower [ login_view ]
