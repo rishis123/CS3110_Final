@@ -156,51 +156,56 @@ let set_master_pwd_view =
     ]
 
 (** [list_view] is the view shown when the user lists all passwords. *)
-let list_view =
-  let pwd_list = Persistence.read_all_encryptable () in
-  let h = 50 in
-  let create_login_label = function
-    | Types.Password p ->
-        L.tower
-          [
-            L.resident ~w:window_width
-              (W.rich_text ~size:label_text_size ~h
-                 Text_display.(page [ bold (para "Name: "); para p.name ]));
-            L.resident ~w:window_width
-              (W.rich_text ~size:label_text_size ~h
-                 Text_display.(
-                   page [ bold (para "Password: "); para p.password ]));
-          ]
-    | Types.Login l -> (
-        let fields =
-          [
-            L.resident ~w:window_width
-              (W.rich_text ~size:label_text_size ~h
-                 Text_display.(page [ bold (para "Name: "); para l.name ]));
-            L.resident ~w:window_width
-              (W.rich_text ~size:label_text_size ~h
-                 Text_display.(
-                   page [ bold (para "Username: "); para l.username ]));
-            L.resident ~w:window_width
-              (W.rich_text ~size:label_text_size ~h
-                 Text_display.(
-                   page [ bold (para "Password: "); para l.password ]));
-          ]
-        in
-        match l.url with
-        | None -> L.tower fields
-        | Some url ->
-            L.tower
-              (fields
-              @ [
-                  L.resident ~w:window_width
-                    (W.rich_text ~size:label_text_size ~h
-                       Text_display.(page [ bold (para "Url: "); para url ]));
-                ]))
+let list_view = ref (L.empty ~w:window_width ~h:600 ())
+
+let update_list_view () =
+  let new_list_view =
+    let pwd_list = Persistence.read_all_encryptable () in
+    let h = 50 in
+    let create_login_label = function
+      | Types.Password p ->
+          L.tower
+            [
+              L.resident ~w:window_width
+                (W.rich_text ~size:label_text_size ~h
+                   Text_display.(page [ bold (para "Name: "); para p.name ]));
+              L.resident ~w:window_width
+                (W.rich_text ~size:label_text_size ~h
+                   Text_display.(
+                     page [ bold (para "Password: "); para p.password ]));
+            ]
+      | Types.Login l -> (
+          let fields =
+            [
+              L.resident ~w:window_width
+                (W.rich_text ~size:label_text_size ~h
+                   Text_display.(page [ bold (para "Name: "); para l.name ]));
+              L.resident ~w:window_width
+                (W.rich_text ~size:label_text_size ~h
+                   Text_display.(
+                     page [ bold (para "Username: "); para l.username ]));
+              L.resident ~w:window_width
+                (W.rich_text ~size:label_text_size ~h
+                   Text_display.(
+                     page [ bold (para "Password: "); para l.password ]));
+            ]
+          in
+          match l.url with
+          | None -> L.tower fields
+          | Some url ->
+              L.tower
+                (fields
+                @ [
+                    L.resident ~w:window_width
+                      (W.rich_text ~size:label_text_size ~h
+                         Text_display.(page [ bold (para "Url: "); para url ]));
+                  ]))
+    in
+    let label_list = List.map create_login_label pwd_list in
+    let scrollpane = L.make_clip ~scrollbar:true ~h:500 (L.tower label_list) in
+    L.tower [ scrollpane; L.resident ~w:window_width back_btn ]
   in
-  let label_list = List.map create_login_label pwd_list in
-  let scrollpane = L.make_clip ~scrollbar:true ~h:500 (L.tower label_list) in
-  L.tower [ scrollpane; L.resident ~w:window_width back_btn ]
+  list_view := new_list_view
 
 (** [home_view] is the view shown right after the user logs in. *)
 let home_view =
@@ -256,7 +261,7 @@ let create_connection signal new_view =
   W.connect_main signal signal
     (fun _ _ _ ->
       L.set_rooms master_layout [ new_view ];
-      Sync.push (fun () -> L.fit_content ~sep:0 new_view))
+      Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
     [ Trigger.update ]
 
 (** [connections] is the list of connections for events. A connection indicates
@@ -268,7 +273,12 @@ let connections =
     create_connection add_complete_signal
       (action_complete_view "Password added");
     create_connection back_home_signal home_view;
-    create_connection list_signal list_view;
+    W.connect_main list_signal list_signal
+      (fun _ _ _ ->
+        update_list_view ();
+        L.set_rooms master_layout [ !list_view ];
+        Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
+      [ Trigger.update ];
     create_connection master_pwd_change_complete_signal
       (action_complete_view "Master password set");
     create_connection master_pwd_change_signal set_master_pwd_view;
