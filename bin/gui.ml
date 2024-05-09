@@ -199,12 +199,8 @@ let list_view =
                 ]))
   in
   let label_list = List.map create_login_label pwd_list in
-  let scrollpane =
-    L.make_clip ~scrollbar:true ~h:(L.height add_view)
-      (L.tower
-         (label_list @ [ L.tower [ L.resident ~w:window_width back_btn ] ]))
-  in
-  L.tower [ scrollpane ]
+  let scrollpane = L.make_clip ~scrollbar:true ~h:500 (L.tower label_list) in
+  L.tower [ scrollpane; L.resident ~w:window_width back_btn ]
 
 (** [home_view] is the view shown right after the user logs in. *)
 let home_view =
