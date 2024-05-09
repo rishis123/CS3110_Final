@@ -23,6 +23,8 @@ let add_signal = W.empty ~w:0 ~h:0 ()
 let add_complete_signal = W.empty ~w:0 ~h:0 ()
 let back_home_signal = W.empty ~w:0 ~h:0 ()
 let list_signal = W.empty ~w:0 ~h:0 ()
+let master_pwd_change_complete_signal = W.empty ~w:0 ~h:0 ()
+let master_pwd_change_signal = W.empty ~w:0 ~h:0 ()
 
 (** [create_btn s f] creates a button with label text [s] that does [f] when
     clicked. Note: This function does not create a connection, which is
@@ -126,6 +128,33 @@ let add_view =
       L.resident ~w:window_width ~h:label_height label;
     ]
 
+(** [set_master_pwd_view] is the view shown when the uset sets the master
+    password. *)
+let set_master_pwd_view =
+  let pwd_input = create_text_input "Enter new password" in
+  let set_btn =
+    create_btn "Set master password" (fun () ->
+        let newpwd = W.get_text pwd_input in
+        (* Salt & Hash -> Convert ot MasterPasswordHash type*)
+        let master_pwd = Encrypt.salt_hash newpwd in
+        Persistence.write_unencryptable master_pwd;
+        W.set_text pwd_input "";
+        Update.push master_pwd_change_complete_signal)
+  in
+  let label =
+    W.label ~size:label_text_size "Please enter the new master password"
+  in
+  let cancel_btn =
+    create_btn "Cancel" (fun () -> Update.push back_home_signal)
+  in
+  L.tower
+    [
+      L.resident ~w:window_width pwd_input;
+      L.resident ~w:window_width set_btn;
+      L.resident ~w:window_width cancel_btn;
+      L.resident ~w:window_width ~h:label_height label;
+    ]
+
 (** [list_view] is the view shown when the user lists all passwords. *)
 let list_view =
   let pwd_list = Persistence.read_all_encryptable () in
@@ -194,7 +223,7 @@ let home_view =
              print_endline "gen btn pressed"));
       L.resident ~w:window_width
         (create_btn "Set the master password" (fun () ->
-             print_endline "setpwd btn pressed"));
+             Update.push master_pwd_change_signal));
       L.resident ~w:window_width
         (create_btn "Import passwords" (fun () ->
              print_endline "import btn pressed"));
@@ -244,6 +273,9 @@ let connections =
       (action_complete_view "Password added");
     create_connection back_home_signal home_view;
     create_connection list_signal list_view;
+    create_connection master_pwd_change_complete_signal
+      (action_complete_view "Master password set");
+    create_connection master_pwd_change_signal set_master_pwd_view;
   ]
 
 (** [main ()] is Bogue's main loop. It will display this board until the window
