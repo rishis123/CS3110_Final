@@ -1,124 +1,68 @@
-let masterpwd_filename =
-  "masterpwd" (* Filename for file that stores master password in hashed form*)
+open Types
 
-let pwd_filename =
-  "pwd" (* Filename for file that stores all passwords in hashed form*)
+(* Filename for file that stores master password in hashed form *)
+let masterpwd_file_path = "data/unencrypted/masterpwd"
 
-(* Goes to the file with the hashed master password, and returns the first line
-   (which is still hashed). Hash is presumably in first line.*)
+(** Filename for file that stores all encrypted data. Invariant: this data
+    matches the schema in schemas/encryptables-schema.json *)
+let encrypted_file_path = "data/encrypted/encryptables"
+
+(** [set_file_perms] sets the data files to read and write allowed only for the
+    owner. *)
+let set_file_perms () =
+  Unix.chmod masterpwd_file_path 0o600;
+  Unix.chmod encrypted_file_path 0o600
+
+(** Precondition: the hash is in the first line of [masterpwd_file_path]. *)
 let read_master_password_hash () =
-  let lines =
-    BatList.of_enum (BatFile.lines_of ("data/" ^ masterpwd_filename))
-  in
+  let lines = BatList.of_enum (BatFile.lines_of masterpwd_file_path) in
   let hash = BatList.hd lines in
   hash
 
 (* Write unencryptable information i.e. master password to memory for first
-   time. Presumably passed in in hashed from. *)
+   time. Presumably passed into function in hashed form. *)
 let write_unencryptable master_value =
   match master_value with
   | Types.MasterPasswordHash hash ->
-      let original =
-        BatList.of_enum (BatFile.lines_of ("data/" ^ pwd_filename))
-        (* takes whatever passwords are already in the file*)
-      in
-      let new_stuff = BatList.enum (BatList.cons hash original) in
-      BatFile.write_lines ("data/" ^ masterpwd_filename) new_stuff
+      BatFile.write_lines masterpwd_file_path (BatList.enum [ hash ])
 
-(* Revised functionality to include either password or login values *)
-let read_all_encryptable () =
-  let lines = BatList.of_enum (BatFile.lines_of ("data/" ^ pwd_filename)) in
-  BatList.map (fun x -> Types.Password (Encrypt.decrypt_password x)) lines
-(* NOTE: THIS WILL BE MODIFIED WHEN decrypt_login FUNCTIONALITY IS DONE*)
+let read_all_encryptable_seq () =
+  Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
+  |> Seq.map Serialization.encrypted_of_json
+  |> Seq.map Encrypt.decrypt
+
+let read_all_encryptable () = read_all_encryptable_seq () |> List.of_seq
 
 (* Writes either password or login information to file*)
 let write_encryptable encryptable =
-  match encryptable with
-  | Types.Password _ ->
-      let line = Encrypt.encrypt encryptable in
-      let original =
-        BatList.of_enum (BatFile.lines_of ("data/" ^ pwd_filename))
-        (* takes whatever passwords are already in the file*)
-      in
-      let new_stuff = BatList.enum (BatList.cons line original) in
-      BatFile.write_lines ("data/" ^ pwd_filename) new_stuff
-      (* Prepends the new password we want to encrypt and write to file with
-         everything already in the passwords file, then writes everything to
-         memory*)
-      (* *)
-  | Types.Login _ -> failwith "Not implemented yet"
+  let old_entries =
+    Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
+  in
+  let new_entry =
+    Encrypt.encrypt encryptable |> Serialization.json_of_encrypted
+    (* takes whatever passwords are already in the file*)
+  in
+  let new_entries = Seq.cons new_entry old_entries in
+  (* Must read the data fully into memory before writing it since otherwise
+     reading and writing will occur concurrently leading to data corruption *)
+  let new_entries_copy = new_entries |> List.of_seq |> List.to_seq in
+  (* Prepends the new password we want to encrypt and write to file with
+     everything already in the passwords file, then writes everything to
+     memory*)
+  Yojson.Basic.seq_to_file encrypted_file_path new_entries_copy
 
 (* Given the password or login we want to delete in unencrypted -- first
    encrypts them (assuming encryption function always yields the same output).
    Then, searches the BatFile for it, and removes it.*)
 let delete_encryptable_by_name encrypt_val_name =
-  let encryptable_list = read_all_encryptable () in
-  let filtered_list =
-    List.filter
-      (fun encryptable ->
-        match encryptable with
-        | Types.Password pwd -> pwd.name <> encrypt_val_name
-        | Types.Login login -> login.name <> encrypt_val_name)
-      encryptable_list
+  let encryptable_seq = read_all_encryptable_seq () in
+  let filtered_seq =
+    Seq.filter
+      (fun encryptable -> name_of_encryptable encryptable = encrypt_val_name)
+      encryptable_seq
   in
-  let encrypted_filtered_list = List.map Encrypt.encrypt filtered_list in
-  BatFile.write_lines ("data/" ^ pwd_filename)
-    (BatList.enum encrypted_filtered_list)
-
-(** Function to remove all non-alphanumeric characters from the word [str], and
-    make it lowercase. *)
-let clean_up str =
-  let normalized = String.lowercase_ascii str in
-  let is_alphanumeric c =
-    match c with
-    | 'a' .. 'z' | '0' .. '9' -> true
-    | _ -> false
+  let encrypted_filtered_seq = Seq.map Encrypt.encrypt filtered_seq in
+  let encrypted_filtered_lines =
+    Seq.map Serialization.json_of_encrypted encrypted_filtered_seq
   in
-  let rec clean_chars index =
-    if index >= String.length normalized then ""
-    else if is_alphanumeric normalized.[index] then
-      String.make 1 normalized.[index] ^ clean_chars (index + 1)
-    else clean_chars (index + 1)
-  in
-  clean_chars 0
-
-(** Function that returns true if [str1] and [str2] have at least 3 characters
-    in common. Note that this is not case-sensitive, and doesn't include
-    non-alphanumerics in names.*)
-let compare_words str1 str2 =
-  let str1 = clean_up str1 in
-  let str2 = clean_up str2 in
-  let len1 = String.length str1 in
-  let len2 = String.length str2 in
-  let rec check_overlap i1 i2 count =
-    if i1 >= len1 || i2 >= len2 then count >= 3
-    else if str1.[i1] = str2.[i2] then
-      check_overlap (i1 + 1) (i2 + 1) (count + 1)
-    else check_overlap (i1 + 1) 0 0
-  in
-  let rec iterate i1 =
-    if i1 >= len1 then false
-    else
-      let rec iterate_inner i2 =
-        if i2 >= len2 then iterate (i1 + 1)
-        else if check_overlap i1 i2 0 then true
-        else iterate_inner (i2 + 1)
-      in
-      iterate_inner 0
-  in
-  iterate 0
-
-(** Returns Type.encryptable list representing every value in the saved
-    passwords/login file with a name sharing at least 3 characters in common
-    with [seek_word]*)
-let autocomplete seek_word =
-  let encryptable_list = read_all_encryptable () in
-  let filtered_list =
-    List.filter
-      (fun encryptable ->
-        match encryptable with
-        | Types.Password pwd -> compare_words pwd.name seek_word
-        | Types.Login login -> compare_words login.name seek_word)
-      encryptable_list
-  in
-  filtered_list
+  Yojson.Basic.seq_to_file encrypted_file_path encrypted_filtered_lines

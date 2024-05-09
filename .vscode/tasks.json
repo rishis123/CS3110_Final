@@ -5,7 +5,7 @@
             "label": "run FinalProject",
             "type": "shell",
             "command": "dune",
-            "args": ["exec", "FinalProject"],
+            "args": ["exec", "bin/main.exe"],
             "problemMatcher": [
                 "$ocamlc"
             ],

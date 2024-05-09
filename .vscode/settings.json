@@ -2,5 +2,13 @@
     "ocaml.sandbox": {
         "kind": "opam",
         "switch": "cs3110-2024sp"
+    },
+    "json.schemas": [
+    {
+        "fileMatch": [
+            "data/encrypted/encryptables.json"
+        ],
+        "url": "./schemas/encryptables-schema.json"
     }
+]
 }
