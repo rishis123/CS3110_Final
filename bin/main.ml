@@ -33,7 +33,7 @@ let get_hidden_input () =
   settings.c_echo <- true;
   Unix.tcsetattr Unix.stdin Unix.TCSANOW settings;
   input
-  
+
 let help_procedure () = print_endline help_msg
 
 let list_procedure () =
