@@ -2,6 +2,7 @@ open OUnit2
 
 let test_suites =
   [
+    (* Test_Persistence.persistence_suite; *)
     Test_GenPassword.gen_password_suite;
     Test_Autocomplete.autocomplete_suite;
     Test_PasswordImport.password_import_suite;

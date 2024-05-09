@@ -1,0 +1,52 @@
+open OUnit2
+open FinalProject
+
+(* Note: reproduce functions in persistence -- writing to these test files
+   instead.*)
+let masterpwd_file_path = "data/unencrypted/test_unencryptables"
+let encrypted_file_path = "data/encrypted/test_encryptables"
+
+let set_file_perms () =
+  (* Ensure directories exist *)
+  if not (Sys.file_exists (Filename.dirname masterpwd_file_path)) then
+    Unix.mkdir (Filename.dirname masterpwd_file_path) 0o755;
+  if not (Sys.file_exists (Filename.dirname encrypted_file_path)) then
+    Unix.mkdir (Filename.dirname encrypted_file_path) 0o755;
+
+  (* Set permissions *)
+  Unix.chmod masterpwd_file_path 0o600;
+  Unix.chmod encrypted_file_path 0o600
+
+(* Note: below are same functions as persistence, but we want to use the above
+   file path for testing rather than modify the same ones for the users.*)
+let read_all_encryptable_seq () =
+  Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
+  |> Seq.map Serialization.encrypted_of_json
+  |> Seq.map Encrypt.decrypt
+
+let read_all_encryptable () = read_all_encryptable_seq () |> List.of_seq
+
+let write_encryptable encryptable =
+  let old_entries =
+    Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
+  in
+  let new_entry =
+    Encrypt.encrypt encryptable |> Serialization.json_of_encrypted
+  in
+  let new_entries = Seq.cons new_entry old_entries in
+  let new_entries_copy = new_entries |> List.of_seq |> List.to_seq in
+  Yojson.Basic.seq_to_file encrypted_file_path new_entries_copy
+
+let tests =
+  [
+    ( "Test write encryptable (password) and read it" >:: fun _ ->
+      set_file_perms ();
+      let try_pass = Types.Password { name = "monkey"; password = "abc123" } in
+      let () = write_encryptable try_pass in
+      let mem_list = read_all_encryptable () in
+      let encrypt_elem = List.hd mem_list in
+      assert_equal "Password {name = \"monkey\"; password = \"abc123\"}"
+        (Types.string_of_encryptable encrypt_elem) );
+  ]
+
+let persistence_suite = "persistence test suite" >::: tests
