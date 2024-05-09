@@ -155,9 +155,12 @@ let set_master_pwd_view =
       L.resident ~w:window_width ~h:label_height label;
     ]
 
-(** [list_view] is the view shown when the user lists all passwords. *)
+(** [!list_view] is the view shown when the user lists all passwords. *)
 let list_view = ref (L.empty ~w:window_width ~h:600 ())
 
+(** [update_list_view ()] updates [list_view] so that changes made to the logins
+    are displayed. In other words, list view updates if changes are made to the
+    data. *)
 let update_list_view () =
   let new_list_view =
     let pwd_list = Persistence.read_all_encryptable () in
@@ -267,18 +270,23 @@ let create_connection signal new_view =
 (** [connections] is the list of connections for events. A connection indicates
     what should happen when a widget receives [Update.push]. *)
 let connections =
+  (* This connection not only changes the view but also causes the listview to
+     update with new changes made since the last time the listview was shown. *)
+  let list_view_connection =
+    W.connect_main list_signal list_signal
+      (fun _ _ _ ->
+        update_list_view ();
+        L.set_rooms master_layout [ !list_view ];
+        Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
+      [ Trigger.update ]
+  in
   [
     create_connection login_signal home_view;
     create_connection add_signal add_view;
     create_connection add_complete_signal
       (action_complete_view "Password added");
     create_connection back_home_signal home_view;
-    W.connect_main list_signal list_signal
-      (fun _ _ _ ->
-        update_list_view ();
-        L.set_rooms master_layout [ !list_view ];
-        Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
-      [ Trigger.update ];
+    list_view_connection;
     create_connection master_pwd_change_complete_signal
       (action_complete_view "Master password set");
     create_connection master_pwd_change_signal set_master_pwd_view;
