@@ -28,6 +28,8 @@ let master_pwd_change_signal = W.empty ~w:0 ~h:0 ()
 let gen_pwd_signal = W.empty ~w:0 ~h:0 ()
 let import_signal = W.empty ~w:0 ~h:0 ()
 let import_complete_signal = W.empty ~w:0 ~h:0 ()
+let export_signal = W.empty ~w:0 ~h:0 ()
+let export_complete_signal = W.empty ~w:0 ~h:0 ()
 
 (** [create_btn s f] creates a button with label text [s] that does [f] when
     clicked. Note: This function does not create a connection, which is
@@ -54,6 +56,28 @@ let action_complete_view msg =
   let label = W.label ~size:label_text_size msg in
   L.tower
     [ L.resident ~w:window_width label; L.resident ~w:window_width back_btn ]
+
+let export_view =
+  let path_input = create_text_input "Enter file path" in
+  let export_btn =
+    create_btn "Export" (fun () ->
+        let path = W.get_text path_input in
+        let secrets = Persistence.read_all_encryptable () in
+        PasswordImport.export secrets path;
+        W.set_text path_input "";
+        Update.push export_complete_signal)
+  in
+  let cancel_btn =
+    create_btn "Cancel" (fun () ->
+        W.set_text path_input "";
+        Update.push back_home_signal)
+  in
+  L.tower
+    [
+      L.resident ~w:window_width path_input;
+      L.resident ~w:window_width export_btn;
+      L.resident ~w:window_width cancel_btn;
+    ]
 
 let import_view =
   let path_input = create_text_input "Enter file path" in
@@ -269,6 +293,9 @@ let home_view =
   let import_btn =
     create_btn "Import passwords" (fun () -> Update.push import_signal)
   in
+  let export_btn =
+    create_btn "Export passwords" (fun () -> Update.push export_signal)
+  in
   L.tower
     [
       L.resident ~w:window_width ~h:label_height label;
@@ -277,9 +304,7 @@ let home_view =
       L.resident ~w:window_width gen_pwd_btn;
       L.resident ~w:window_width set_master_pwd_btn;
       L.resident ~w:window_width import_btn;
-      L.resident ~w:window_width
-        (create_btn "Export a password" (fun () ->
-             print_endline "Export btn pressed"));
+      L.resident ~w:window_width export_btn;
     ]
 
 (** [login_view] is the view shown before the user logs in *)
@@ -346,6 +371,9 @@ let connections =
     create_connection import_signal import_view;
     create_connection import_complete_signal
       (action_complete_view "Import complete");
+    create_connection export_signal export_view;
+    create_connection export_complete_signal
+      (action_complete_view "Export complete");
   ]
 
 (** [main ()] is Bogue's main loop. It will display this board until the window
