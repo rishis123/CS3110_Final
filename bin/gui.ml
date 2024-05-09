@@ -25,6 +25,9 @@ let back_home_signal = W.empty ~w:0 ~h:0 ()
 let list_signal = W.empty ~w:0 ~h:0 ()
 let master_pwd_change_complete_signal = W.empty ~w:0 ~h:0 ()
 let master_pwd_change_signal = W.empty ~w:0 ~h:0 ()
+let gen_pwd_signal = W.empty ~w:0 ~h:0 ()
+let import_signal = W.empty ~w:0 ~h:0 ()
+let import_complete_signal = W.empty ~w:0 ~h:0 ()
 
 (** [create_btn s f] creates a button with label text [s] that does [f] when
     clicked. Note: This function does not create a connection, which is
@@ -51,6 +54,45 @@ let action_complete_view msg =
   let label = W.label ~size:label_text_size msg in
   L.tower
     [ L.resident ~w:window_width label; L.resident ~w:window_width back_btn ]
+
+let import_view =
+  let path_input = create_text_input "Enter file path" in
+  let import_btn =
+    create_btn "Import" (fun () ->
+        let path = W.get_text path_input in
+        let new_secrets = PasswordImport.import path in
+        new_secrets |> List.iter Persistence.write_encryptable;
+        W.set_text path_input "";
+        Update.push import_complete_signal)
+  in
+  let cancel_btn =
+    create_btn "Cancel" (fun () ->
+        W.set_text path_input "";
+        Update.push back_home_signal)
+  in
+  L.tower
+    [
+      L.resident ~w:window_width path_input;
+      L.resident ~w:window_width import_btn;
+      L.resident ~w:window_width cancel_btn;
+    ]
+
+(** [gen_pwd_view] is the view shown when the user generates a new password *)
+let gen_pwd_view = ref (L.empty ~w:window_width ~h:600 ())
+
+let update_gen_pwd_view () =
+  let pwd_label =
+    W.label ~size:label_text_size
+      (String.concat ""
+         (List.map Char.escaped
+            (Gen_password.generate_password_with_special 12 [])))
+  in
+  gen_pwd_view :=
+    L.tower
+      [
+        L.resident ~w:window_width pwd_label;
+        L.resident ~w:window_width back_btn;
+      ]
 
 (** [add_view] is the view shown when the user adds a new password. *)
 let add_view =
@@ -217,20 +259,24 @@ let home_view =
     create_btn "Add a password" (fun () -> Update.push add_signal)
   in
   let list_btn = create_btn "List logins" (fun () -> Update.push list_signal) in
+  let gen_pwd_btn =
+    create_btn "Generate a password" (fun () -> Update.push gen_pwd_signal)
+  in
+  let set_master_pwd_btn =
+    create_btn "Set the master password" (fun () ->
+        Update.push master_pwd_change_signal)
+  in
+  let import_btn =
+    create_btn "Import passwords" (fun () -> Update.push import_signal)
+  in
   L.tower
     [
       L.resident ~w:window_width ~h:label_height label;
       L.resident ~w:window_width add_btn;
       L.resident ~w:window_width list_btn;
-      L.resident ~w:window_width
-        (create_btn "Generate a password" (fun () ->
-             print_endline "gen btn pressed"));
-      L.resident ~w:window_width
-        (create_btn "Set the master password" (fun () ->
-             Update.push master_pwd_change_signal));
-      L.resident ~w:window_width
-        (create_btn "Import passwords" (fun () ->
-             print_endline "import btn pressed"));
+      L.resident ~w:window_width gen_pwd_btn;
+      L.resident ~w:window_width set_master_pwd_btn;
+      L.resident ~w:window_width import_btn;
       L.resident ~w:window_width
         (create_btn "Export a password" (fun () ->
              print_endline "Export btn pressed"));
@@ -267,18 +313,24 @@ let create_connection signal new_view =
       Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
     [ Trigger.update ]
 
+let create_mutation_connection signal view_ref update_fun =
+  W.connect_main signal signal
+    (fun _ _ _ ->
+      update_fun ();
+      L.set_rooms master_layout [ !view_ref ];
+      Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
+    [ Trigger.update ]
+
 (** [connections] is the list of connections for events. A connection indicates
     what should happen when a widget receives [Update.push]. *)
 let connections =
   (* This connection not only changes the view but also causes the listview to
      update with new changes made since the last time the listview was shown. *)
   let list_view_connection =
-    W.connect_main list_signal list_signal
-      (fun _ _ _ ->
-        update_list_view ();
-        L.set_rooms master_layout [ !list_view ];
-        Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
-      [ Trigger.update ]
+    create_mutation_connection list_signal list_view update_list_view
+  in
+  let gen_pwd_view_connection =
+    create_mutation_connection gen_pwd_signal gen_pwd_view update_gen_pwd_view
   in
   [
     create_connection login_signal home_view;
@@ -290,6 +342,10 @@ let connections =
     create_connection master_pwd_change_complete_signal
       (action_complete_view "Master password set");
     create_connection master_pwd_change_signal set_master_pwd_view;
+    gen_pwd_view_connection;
+    create_connection import_signal import_view;
+    create_connection import_complete_signal
+      (action_complete_view "Import complete");
   ]
 
 (** [main ()] is Bogue's main loop. It will display this board until the window
