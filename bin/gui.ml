@@ -57,6 +57,7 @@ let action_complete_view msg =
   L.tower
     [ L.resident ~w:window_width label; L.resident ~w:window_width back_btn ]
 
+(** [export_view] is the view shown when exporting passwords to a file. *)
 let export_view =
   let path_input = create_text_input "Enter file path" in
   let export_btn =
@@ -79,6 +80,7 @@ let export_view =
       L.resident ~w:window_width cancel_btn;
     ]
 
+(** [import_view] is the view shown when importing passwords from a file. *)
 let import_view =
   let path_input = create_text_input "Enter file path" in
   let import_btn =
@@ -104,17 +106,55 @@ let import_view =
 (** [gen_pwd_view] is the view shown when the user generates a new password *)
 let gen_pwd_view = ref (L.empty ~w:window_width ~h:600 ())
 
+let special_char_on = ref true
+let pwd_length = ref 12
+
 let update_gen_pwd_view () =
-  let pwd_label =
-    W.label ~size:label_text_size
-      (String.concat ""
-         (List.map Char.escaped
-            (Gen_password.generate_password_with_special 12 [])))
+  let get_pwd () =
+    if !special_char_on then
+      String.concat ""
+        (List.map Char.escaped
+           (Gen_password.generate_password_with_special !pwd_length []))
+    else
+      String.concat ""
+        (List.map Char.escaped
+           (Gen_password.generate_password_without_special !pwd_length []))
+  in
+  let length_label = W.label ~size:label_text_size "Password length: " in
+  let length_input = create_text_input "      " in
+  let pwd_label = W.label ~size:label_text_size (get_pwd ()) in
+  let special_char_btn =
+    W.button ~kind:Button.Switch
+      ~label_on:(Label.create ~size:label_text_size "Special charaters: On")
+      ~label_off:(Label.create ~size:label_text_size "Special character: Off")
+      ~action:(fun x ->
+        if x then special_char_on := true else special_char_on := false)
+      ""
+  in
+  let () = if !special_char_on then W.set_state special_char_btn true else () in
+  let () = W.set_text length_input (string_of_int !pwd_length) in
+  let gen_again_btn =
+    create_btn "Generate again" (fun () ->
+        let new_len =
+          match int_of_string_opt (W.get_text length_input) with
+          | None -> 12
+          | Some x -> if x <= 0 || x > 40 then 12 else x
+        in
+        W.set_text length_input (string_of_int new_len);
+        pwd_length := new_len;
+        W.set_text pwd_label (get_pwd ()))
   in
   gen_pwd_view :=
     L.tower
       [
         L.resident ~w:window_width pwd_label;
+        L.resident ~w:window_width special_char_btn;
+        L.flat
+          [
+            L.resident ~w:(window_width / 2) length_label;
+            L.resident ~w:(window_width / 2) length_input;
+          ];
+        L.resident ~w:window_width gen_again_btn;
         L.resident ~w:window_width back_btn;
       ]
 
@@ -327,6 +367,7 @@ let login_view =
       L.resident ~w:window_width ~h:label_height label;
     ]
 
+(** [master_layout] is the layout which is displayed in the window*)
 let master_layout = L.tower [ login_view ]
 
 (** [create_connection signal new_view] creates a connection such that when
