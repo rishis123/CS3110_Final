@@ -164,3 +164,33 @@ let common_passwords =
    passwords*)
 let check_strength password_entry =
   List.exists (compare_words password_entry) common_passwords
+
+(* Checks every saved password or login, checking which are secure and which
+   aren't *)
+let check_vulnerabilities () =
+  let pwd_list = Persistence.read_all_encryptable () in
+
+  let get_only_passwords (pwd : Types.encryptable) =
+    match pwd with
+    | Types.Login l -> l.password
+    | Types.Password p -> p.password
+  in
+  let get_only_names (pwd : Types.encryptable) : string =
+    match pwd with
+    | Types.Login l -> l.name
+    | Types.Password p -> Types.string_of_master_password_hash p.name
+  in
+  let string_pwd_list = List.map get_only_passwords pwd_list in
+  let len = List.length string_pwd_list in
+  let vulnerable = ref [] in
+
+  (* we just want to modify this one ref rather than return a new list for each
+     iteration of the loop*)
+  for i = 0 to len - 1 do
+    let password_entry = List.nth string_pwd_list i in
+    if check_strength password_entry then
+      (* if the password is vulnerable, add the corresponding name to the
+         vulnerable list*)
+      vulnerable := get_only_names (List.nth pwd_list i) :: !vulnerable
+  done;
+  !vulnerable

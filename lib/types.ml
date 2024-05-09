@@ -48,7 +48,7 @@ let string_of_login (l : login) : string =
 
 (** [string_of_encryptable e] is a string representation of [e] for logging or
     debugging. *)
-let string_of_encryptable : encryptable -> string = function
+let string_of_encryptable = function
   | Password p -> string_of_password p
   | Login l -> string_of_login l
 
@@ -58,7 +58,7 @@ let string_of_master_password_hash h : string = h
 
 (** [string_of_unencryptable u] is a string representation of [u] for logging or
     debugging. *)
-let string_of_unencryptable : unencryptable -> string = function
+let string_of_unencryptable = function
   | MasterPasswordHash h -> string_of_master_password_hash h
 
 type encrypted_form =
