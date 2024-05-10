@@ -361,7 +361,7 @@ let login_view =
     create_btn "Login" (fun () ->
         let pwd = W.get_text input in
         W.set_text input "";
-        if MasterPassword.check_master pwd then
+        if MasterPassword.check_master_pwd pwd then
           let () = Encrypt.set_key pwd in
           Update.push login_signal
         else W.set_text label "Password incorrect")
