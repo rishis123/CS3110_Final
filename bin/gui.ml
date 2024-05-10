@@ -106,9 +106,15 @@ let import_view =
 (** [gen_pwd_view] is the view shown when the user generates a new password *)
 let gen_pwd_view = ref (L.empty ~w:window_width ~h:600 ())
 
+(** [!special_char_on] is whether to include special characters in the generated
+    password. *)
 let special_char_on = ref true
+
+(** [pwd_length] is the length of the password to generate. *)
 let pwd_length = ref 12
 
+(** [update_gen_pwd_view ()] updates the [gen_pwd_view] with a newly generated
+    password when transitioning from home. *)
 let update_gen_pwd_view () =
   let get_pwd () =
     if !special_char_on then
