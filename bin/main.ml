@@ -144,6 +144,7 @@ let logged_in_loop () =
       ("import", import_procedure);
     ]
     ~on_timeout:quit_procedure
+    ()
 
 let rec main_loop () =
   Persistence.set_file_perms ();
@@ -159,7 +160,7 @@ let rec main_loop () =
       let pwd = get_hidden_input () in
       if login_procedure pwd then begin
         print_endline "Logged in!";
-        logged_in_loop ()
+        Lwt_main.run (logged_in_loop ())
       end
       else
         let () = print_endline "The password does not match" in

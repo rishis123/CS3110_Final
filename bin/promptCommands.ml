@@ -1,20 +1,7 @@
-(** Asynchronous timer for [n] seconds -- helps maintain security.*)
-let timer n on_timeout =
-  let rec countdown remaining =
-    if remaining <= 0 then (
-      print_endline "Time's up!";
-      (* to notify user why program has quit. *)
-      on_timeout ())
-    else (
-      Unix.sleep 1;
-      countdown (remaining - 1))
-  in
-  let _ = Thread.create countdown n in
-  ()
-
-let rec prompt_commands commands_to_actions ~on_timeout =
-  print_endline "Type a command. You have 5 minutes:";
-  let () = timer 300 on_timeout in
+let prompt_commands_no_timeout commands_to_actions
+    ?(default = fun () -> print_endline "I don't recognize that command.") () =
+  print_endline
+    "Type a command (you will be logged out after five minutes of inactivity):";
   let input = read_line () in
   let action_opt =
     commands_to_actions
@@ -22,13 +9,30 @@ let rec prompt_commands commands_to_actions ~on_timeout =
            FinalProject.Util.fuzzy_equal command input)
     |> Option.map (fun (_, action) -> action)
   in
-  let handle_invalid_input () =
-    print_endline "I don't recognize that command."
-  in
   let action =
     match action_opt with
     | Some a -> a
-    | None -> handle_invalid_input
+    | None -> default
   in
-  action ();
-  prompt_commands commands_to_actions ~on_timeout
+  action ()
+
+let rec prompt_commands commands_to_actions ?default ~on_timeout () =
+  let open Lwt in
+  let prompt_promise =
+    let%lwt () =
+      Lwt_preemptive.detach
+        (prompt_commands_no_timeout commands_to_actions ?default)
+        ()
+    in
+    return_true
+  in
+  let timeout_promise =
+    let%lwt () = Lwt_unix.sleep 300. in
+    return_false
+  in
+  let%lwt success = pick [ prompt_promise; timeout_promise ] in
+  if success then prompt_commands commands_to_actions ?default ~on_timeout ()
+  else begin
+    print_endline "Time's up!\nYou have been logged out due to inactivity.";
+    return (on_timeout ())
+  end
