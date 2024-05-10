@@ -1,4 +1,20 @@
-{"form":"login","name":"loggy","encrypted_data":"encrypted 😎: {\"name\":\"loggy\",\"username\":\"user@email.com\",\"password\":\"my super secret passsword!!!!\",\"url\":null}"}
-{"form":"password","name":"name2","encrypted_data":"encrypted 😎: {\"name\":\"name2\",\"password\":\"askl;dgjals;djv\"}"}
-{"form":"password","name":"hi","encrypted_data":"encrypted 😎: {\"name\":\"hi\",\"password\":\"hello\"}"}
-{"form":"password","name":"name1","encrypted_data":"encrypted 😎: {\"name\":\"name1\",\"password\":\"pass1\"}"}
+{
+  "form": "login",
+  "name": "loggy",
+  "encrypted_data": "encrypted 😎: {\"name\":\"loggy\",\"username\":\"user@email.com\",\"password\":\"my super secret passsword!!!!\",\"url\":null}"
+}
+{
+  "form": "password",
+  "name": "name2",
+  "encrypted_data": "encrypted 😎: {\"name\":\"name2\",\"password\":\"askl;dgjals;djv\"}"
+}
+{
+  "form": "password",
+  "name": "hi",
+  "encrypted_data": "encrypted 😎: {\"name\":\"hi\",\"password\":\"hello\"}"
+}
+{
+  "form": "password",
+  "name": "name1",
+  "encrypted_data": "encrypted 😎: {\"name\":\"name1\",\"password\":\"pass1\"}"
+}
