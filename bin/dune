@@ -1,4 +1,6 @@
 (executables
  (public_names FinalProjectMain FinalProjectGui)
  (names main gui)
- (libraries FinalProject unix bogue))
+ (libraries FinalProject unix bogue lwt.unix)
+ (preprocess
+  (pps lwt_ppx)))

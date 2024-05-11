@@ -20,3 +20,5 @@ val run_timeout : int -> (unit -> unit) -> bool
 val zip : 'a Seq.t -> 'b Seq.t -> ('a * 'b) Seq.t
 (** [zip s1 s2] returns a sequence of tuples, with the ith tuple containing the
     ith element of s1 and the ith element of s2 *)
+
+val conf_use_sequential_runner : unit -> unit

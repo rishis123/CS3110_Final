@@ -1,11 +1,5 @@
 open FinalProject
 
-let login_procedure pwd =
-  if FinalProject.MasterPassword.check_master_pwd pwd then
-    let () = Encrypt.set_key pwd in
-    true
-  else false
-
 let quit_procedure () =
   print_endline "Exited the program";
   exit 0
@@ -126,65 +120,102 @@ let import_procedure () =
   new_secrets |> List.iter Persistence.write_encryptable;
   Printf.printf "Passwords successfully imported from %s\n%!" path
 
-let logged_in_loop () =
-  PromptCommands.prompt_commands
+let logged_in_actions =
+  [
+    ("quit", quit_procedure);
+    ("help", help_procedure);
+    ("list", list_procedure);
+    ("findsing", findsing_procedure);
+    ("gen_password", gen_password_procedure);
+    ("add", add_procedure);
+    ("add pwd", add_password_procedure);
+    ("add login", add_login_procedure);
+    ("setpwd", set_pwd_procedure);
+    ("check_strength", check_strength_procedure);
+    ("health_check", health_check_procedure);
+    ("export", export_procedure);
+    ("import", import_procedure);
+  ]
+
+let closest_commands input =
+  let input_distance =
+    EditDistance.min_edit_distance 1.0
+      (fun x y -> if x = y then 0.0 else 1.)
+      input
+  in
+  let commands = List.map fst logged_in_actions in
+  let commands_and_dists =
+    List.map input_distance commands |> Util.zip commands
+  in
+  let compare_by_distance l r = compare (snd l) (snd r) in
+  List.fast_sort compare_by_distance commands_and_dists
+
+let unrecognized_input_procedure input =
+  print_endline "That is not a valid command.";
+  let closest =
+    closest_commands input
+    |> List.filter (fun (_, dist) -> dist <= 3.)
+    |> List.map fst
+  in
+  match List.length closest with
+  | 0 -> ()
+  | 1 -> Printf.printf "Maybe you meant %s?\n" (List.hd closest)
+  | _ ->
+      Printf.printf "Maybe you meant one of these: %s?\n"
+        (String.concat ", " closest)
+
+let logged_in_loop =
+  let open PromptCommands in
+  prompt_commands logged_in_actions ~default:unrecognized_input_procedure
+    ~timeout_handler:(TimeoutHandler.make 300. quit_procedure)
+    ~prompt_message:
+      "Type a command (you will be logged out after five minutes of \
+       inactivity):"
+
+let try_login pwd =
+  if FinalProject.MasterPassword.check_master_pwd pwd then
+    let () = Encrypt.set_key pwd in
+    true
+  else false
+
+let login_procedure () =
+  print_endline "Type your master password:";
+  let pwd = get_hidden_input () in
+  if try_login pwd then begin
+    print_endline "Logged in!\n";
+    Lwt_main.run (logged_in_loop ())
+  end
+  else print_endline "The password does not match."
+
+let main_incorrect_input_procedure input =
+  if
+    input = "add"
+    || input = "list"
+    || input = "findsing"
+    || input = "gen_password"
+    || input = "setpwd"
+    || input = "import"
+    || input = "export"
+    || input = "check_strength"
+    || input = "health_check"
+  then
+    print_endline
+      "Must log in before using these commands -- try 'login' to log in or \
+       'help'"
+  else print_endline "That is not a valid command."
+
+let main_loop () =
+  Persistence.set_file_perms ();
+  let open PromptCommands in
+  prompt_commands
     [
       ("quit", quit_procedure);
-      ("help", help_procedure);
-      ("list", list_procedure);
-      ("findsing", findsing_procedure);
-      ("gen_password", gen_password_procedure);
-      ("add", add_procedure);
-      ("add pwd", add_password_procedure);
-      ("add login", add_login_procedure);
-      ("setpwd", set_pwd_procedure);
-      ("check_strength", check_strength_procedure);
-      ("health_check", health_check_procedure);
-      ("export", export_procedure);
-      ("import", import_procedure);
+      ( "help",
+        fun () ->
+          print_endline "Must login before accessing other functionalities" );
+      ("login", login_procedure);
     ]
-    ~on_timeout:quit_procedure
-
-let rec main_loop () =
-  Persistence.set_file_perms ();
-  print_endline "Type a command -- quit, help, or login:";
-  let input = read_line () in
-  match input with
-  | "quit" -> quit_procedure ()
-  | "help" ->
-      print_endline "Must login before accessing other functionalities";
-      main_loop ()
-  | "login" -> begin
-      print_endline "Type your master password:";
-      let pwd = get_hidden_input () in
-      if login_procedure pwd then begin
-        print_endline "Logged in!";
-        logged_in_loop ()
-      end
-      else
-        let () = print_endline "The password does not match" in
-        main_loop ()
-    end
-  | x -> begin
-      if
-        x = "add"
-        || x = "list"
-        || x = "findsing"
-        || x = "gen_password"
-        || x = "setpwd"
-        || x = "import"
-        || x = "export"
-        || x = "check_strength"
-        || x = "health_check"
-      then
-        let () =
-          print_endline
-            "Must log in before using these commands -- try 'login' to log in \
-             or 'help'"
-        in
-        main_loop ()
-      else print_endline "That is not a valid command.";
-      main_loop ()
-    end
+    ~default:main_incorrect_input_procedure
+    ~prompt_message:"Type a command -- quit, help, or login:" ()
 
 let _ = main_loop ()

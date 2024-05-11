@@ -63,3 +63,22 @@ let zip (s1 : 'a Seq.t) (s2 : 'b Seq.t) : ('a * 'b) Seq.t =
   | Cons (h1, t1), Cons (h2, t2) -> fun () -> Cons ((h1, h2), zip t1 t2)
   | Nil, Nil -> fun () -> Nil
   | _ -> failwith "different sizes"
+
+let conf_use_sequential_runner () =
+  OUnitCore.run_test_tt_main_conf :=
+    fun ?(preset = []) ?argv extra_specs ->
+      try
+        let run_sequential_arg = [| "--"; "-runner"; "sequential" |] in
+        match argv with
+        | Some argv ->
+            OUnitConf.load
+              ~argv:(Array.append argv run_sequential_arg)
+              ~preset:(OUnitChooser.preset (OUnitRunner.preset preset))
+              extra_specs
+        | None ->
+            OUnitConf.load ~argv:run_sequential_arg
+              ~preset:(OUnitChooser.preset (OUnitRunner.preset preset))
+              extra_specs
+      with Stdlib.Arg.Bad bad_message ->
+        print_endline bad_message;
+        raise (Stdlib.Arg.Bad bad_message)
