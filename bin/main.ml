@@ -1,11 +1,5 @@
 open FinalProject
 
-let login_procedure pwd =
-  if FinalProject.MasterPassword.check_master_pwd pwd then
-    let () = Encrypt.set_key pwd in
-    true
-  else false
-
 let quit_procedure () =
   print_endline "Exited the program";
   exit 0
@@ -126,8 +120,9 @@ let import_procedure () =
   new_secrets |> List.iter Persistence.write_encryptable;
   Printf.printf "Passwords successfully imported from %s\n%!" path
 
-let logged_in_loop () =
-  PromptCommands.prompt_commands
+let logged_in_loop =
+  let open PromptCommands in
+  prompt_commands
     [
       ("quit", quit_procedure);
       ("help", help_procedure);
@@ -143,48 +138,56 @@ let logged_in_loop () =
       ("export", export_procedure);
       ("import", import_procedure);
     ]
-    ~on_timeout:quit_procedure
+    ~timeout_handler:(TimeoutHandler.make 300. quit_procedure)
+    ~prompt_message:
+      "Type a command (you will be logged out after five minutes of \
+       inactivity):"
 
-let rec main_loop () =
+let try_login pwd =
+  if FinalProject.MasterPassword.check_master_pwd pwd then
+    let () = Encrypt.set_key pwd in
+    true
+  else false
+
+let login_procedure () =
+  print_endline "Type your master password:";
+  let pwd = get_hidden_input () in
+  if try_login pwd then begin
+    print_endline "Logged in!";
+    Lwt_main.run (logged_in_loop ())
+  end
+  else print_endline "The password does not match."
+
+let incorrect_input_procedure x =
+  if
+    x = "add"
+    || x = "list"
+    || x = "findsing"
+    || x = "gen_password"
+    || x = "setpwd"
+    || x = "import"
+    || x = "export"
+    || x = "check_strength"
+    || x = "health_check"
+  then
+    print_endline
+      "Must log in before using these commands -- try 'login' to log in or \
+       'help'"
+  else print_endline "That is not a valid command."
+
+let main_loop () =
   Persistence.set_file_perms ();
-  print_endline "Type a command -- quit, help, or login:";
-  let input = read_line () in
-  match input with
-  | "quit" -> quit_procedure ()
-  | "help" ->
-      print_endline "Must login before accessing other functionalities";
-      main_loop ()
-  | "login" -> begin
-      print_endline "Type your master password:";
-      let pwd = get_hidden_input () in
-      if login_procedure pwd then begin
-        print_endline "Logged in!";
-        logged_in_loop ()
-      end
-      else
-        let () = print_endline "The password does not match" in
-        main_loop ()
-    end
-  | x -> begin
-      if
-        x = "add"
-        || x = "list"
-        || x = "findsing"
-        || x = "gen_password"
-        || x = "setpwd"
-        || x = "import"
-        || x = "export"
-        || x = "check_strength"
-        || x = "health_check"
-      then
-        let () =
-          print_endline
-            "Must log in before using these commands -- try 'login' to log in \
-             or 'help'"
-        in
-        main_loop ()
-      else print_endline "That is not a valid command.";
-      main_loop ()
-    end
+  let open PromptCommands in
+  prompt_commands
+    [
+      ("quit", quit_procedure);
+      ( "help",
+        fun () ->
+          print_endline "Must login before accessing other functionalities" );
+      ("login", login_procedure);
+    ]
+    ~default:incorrect_input_procedure
+    ~prompt_message:"Type a command -- quit, help, or login:"
+    ()
 
 let _ = main_loop ()

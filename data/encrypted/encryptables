@@ -1,20 +1,3 @@
-{
-  "form": "login",
-  "name": "loggy",
-  "encrypted_data": "encrypted ğŸ˜: {\"name\":\"loggy\",\"username\":\"user@email.com\",\"password\":\"my super secret passsword!!!!\",\"url\":null}"
-}
-{
-  "form": "password",
-  "name": "name2",
-  "encrypted_data": "encrypted ğŸ˜: {\"name\":\"name2\",\"password\":\"askl;dgjals;djv\"}"
-}
-{
-  "form": "password",
-  "name": "hi",
-  "encrypted_data": "encrypted ğŸ˜: {\"name\":\"hi\",\"password\":\"hello\"}"
-}
-{
-  "form": "password",
-  "name": "name1",
-  "encrypted_data": "encrypted ğŸ˜: {\"name\":\"name1\",\"password\":\"pass1\"}"
-}
+{"form":"login","name":"hasurl","encrypted_data":"?ìdœ\u0005‡ÒØnZÒ‘_;šîzå\f™P9@ì¤·CJzßjÌÛ¯ä\røşA’i\u00171Ûn:M–||4\u0002´zƒ‹q\u001c.C>=tcÅˆ\u0004²\u0006Ùù+\u0010ÓA\u0003\\pY\u007fÜñ\u0007\t¦*(à\u001d\"\u0006T"}
+{"form":"login","name":"loggy","encrypted_data":"æ÷Ùµ…/i\u0018¯#’¯+\u0015Qnn‹'šL/n‰\u0016V»9Ê«Æ@'äœl`”¸:VVlÌß;\\]\n\u0010(U<_§Y²\u0017­DV-½$Æ)ÛÄ˜Ékwô&Mˆ¢FgóµuôvüE–úÒr³Ù¼L"}
+{"form":"password","name":"password11","encrypted_data":"°9\bëÊBÅÎ±†ÆzŞ\u0015\u0000\u001e®Q-j5È.²bÈ\u0001\u0019á¿í‰cÎ†~Û˜\u0018Ò_\u0001\u0011N\u0018:‚M"}
