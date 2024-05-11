@@ -120,24 +120,53 @@ let import_procedure () =
   new_secrets |> List.iter Persistence.write_encryptable;
   Printf.printf "Passwords successfully imported from %s\n%!" path
 
+let logged_in_actions =
+  [
+    ("quit", quit_procedure);
+    ("help", help_procedure);
+    ("list", list_procedure);
+    ("findsing", findsing_procedure);
+    ("gen_password", gen_password_procedure);
+    ("add", add_procedure);
+    ("add pwd", add_password_procedure);
+    ("add login", add_login_procedure);
+    ("setpwd", set_pwd_procedure);
+    ("check_strength", check_strength_procedure);
+    ("health_check", health_check_procedure);
+    ("export", export_procedure);
+    ("import", import_procedure);
+  ]
+
+let closest_commands input =
+  let input_distance =
+    EditDistance.min_edit_distance 1.0
+      (fun x y -> if x = y then 0.0 else 1.)
+      input
+  in
+  let commands = List.map fst logged_in_actions in
+  let commands_and_dists =
+    List.map input_distance commands |> Util.zip commands
+  in
+  let compare_by_distance l r = compare (snd l) (snd r) in
+  List.fast_sort compare_by_distance commands_and_dists
+
+let unrecognized_input_procedure input =
+  print_endline "That is not a valid command.";
+  let closest =
+    closest_commands input
+    |> List.filter (fun (_, dist) -> dist <= 2.)
+    |> List.map fst
+  in
+  match List.length closest with
+  | 0 -> ()
+  | 1 -> Printf.printf "Maybe you meant %s?\n" (List.hd closest)
+  | _ ->
+      Printf.printf "Maybe you meant one of these: %s?\n"
+        (String.concat ", " closest)
+
 let logged_in_loop =
   let open PromptCommands in
-  prompt_commands
-    [
-      ("quit", quit_procedure);
-      ("help", help_procedure);
-      ("list", list_procedure);
-      ("findsing", findsing_procedure);
-      ("gen_password", gen_password_procedure);
-      ("add", add_procedure);
-      ("add pwd", add_password_procedure);
-      ("add login", add_login_procedure);
-      ("setpwd", set_pwd_procedure);
-      ("check_strength", check_strength_procedure);
-      ("health_check", health_check_procedure);
-      ("export", export_procedure);
-      ("import", import_procedure);
-    ]
+  prompt_commands logged_in_actions ~default:unrecognized_input_procedure
     ~timeout_handler:(TimeoutHandler.make 300. quit_procedure)
     ~prompt_message:
       "Type a command (you will be logged out after five minutes of \
@@ -158,17 +187,17 @@ let login_procedure () =
   end
   else print_endline "The password does not match."
 
-let incorrect_input_procedure x =
+let main_incorrect_input_procedure input =
   if
-    x = "add"
-    || x = "list"
-    || x = "findsing"
-    || x = "gen_password"
-    || x = "setpwd"
-    || x = "import"
-    || x = "export"
-    || x = "check_strength"
-    || x = "health_check"
+    input = "add"
+    || input = "list"
+    || input = "findsing"
+    || input = "gen_password"
+    || input = "setpwd"
+    || input = "import"
+    || input = "export"
+    || input = "check_strength"
+    || input = "health_check"
   then
     print_endline
       "Must log in before using these commands -- try 'login' to log in or \
@@ -186,8 +215,7 @@ let main_loop () =
           print_endline "Must login before accessing other functionalities" );
       ("login", login_procedure);
     ]
-    ~default:incorrect_input_procedure
-    ~prompt_message:"Type a command -- quit, help, or login:"
-    ()
+    ~default:main_incorrect_input_procedure
+    ~prompt_message:"Type a command -- quit, help, or login:" ()
 
 let _ = main_loop ()
