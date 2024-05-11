@@ -47,6 +47,29 @@ let tests =
       let encrypt_elem = List.hd mem_list in
       assert_equal "Password {name = \"monkey\"; password = \"abc123\"}"
         (Types.string_of_encryptable encrypt_elem) );
+    ( "Test add a login as well and read both" >:: fun _ ->
+      (* set_file_perms (); *)
+      let try_login =
+        Types.Login
+          {
+            name = "monkey";
+            username = "donkey";
+            password = "abc123";
+            url = Some "joe";
+          }
+      in
+      let () = write_encryptable try_login in
+      let mem_list = read_all_encryptable () in
+      let encrypt_first = List.hd mem_list in
+      (* the password*)
+      let encrypt_second = List.hd (List.tl mem_list) in
+      (*the login*)
+      assert_equal "P{ name = \"monkey\"; password = \"abc123\"}"
+        (Types.string_of_encryptable encrypt_first);
+      assert_equal
+        "L{name = \"monkey\"; username = \"donkey\"; password = \"abc123\"; \
+         url = \"joe\"}"
+        (Types.string_of_encryptable encrypt_second) );
   ]
 
 let persistence_suite = "persistence test suite" >::: tests
