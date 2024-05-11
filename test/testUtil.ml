@@ -57,13 +57,6 @@ let run_timeout timeout f =
     Sys.set_signal Sys.sigalrm Sys.Signal_default;
     false
 
-let zip (s1 : 'a Seq.t) (s2 : 'b Seq.t) : ('a * 'b) Seq.t =
-  let open Seq in
-  match (s1 (), s2 ()) with
-  | Cons (h1, t1), Cons (h2, t2) -> fun () -> Cons ((h1, h2), zip t1 t2)
-  | Nil, Nil -> fun () -> Nil
-  | _ -> failwith "different sizes"
-
 let conf_use_sequential_runner () =
   OUnitCore.run_test_tt_main_conf :=
     fun ?(preset = []) ?argv extra_specs ->

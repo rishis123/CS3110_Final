@@ -14,6 +14,15 @@ val uncurry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
 val fuzzy_equal : string -> string -> bool
 (** [fuzzy_equal x y] returns whether x and y are essentially equal *)
 
-val zip : 'a list -> 'b list -> ('a * 'b) list
-(** [zip l1 l2] returns a list of tuples, with the ith tuple containing the ith
-    element of l1 and the ith element of l2 *)
+val zip : 'a Seq.t -> 'b Seq.t -> ('a * 'b) Seq.t
+(** [zip s1 s2] returns a sequence of tuples, with the ith tuple containing the
+    ith element of s1 and the ith element of s2 *)
+
+val compare_by : ('a -> 'b) -> 'a -> 'a -> int
+(** [compare_by selector x y] compares [x] and [y] by the value of [selector x]
+    and [selector y] *)
+
+val sorted_by_below_threshold : ('a -> 'b) -> 'b -> 'a Seq.t -> 'a Seq.t
+(** [sorted_by_below_threshold selector threshold list] returns a sequence of
+    elements of [list] for which [selector element <= threshold]. The elements
+    are returned in decreasing value of [selector element] *)
