@@ -9,7 +9,6 @@ let parallel_test_suites =
     Test_Util.util_suite;
     Test_Memoize.memoize_suite;
     Test_EditDistance.edit_distance_suite;
-    Test_Encrypt.encrypt_test_suite;
   ]
 
 let sequential_test_suites = [ Test_Encrypt.encrypt_test_suite ]
