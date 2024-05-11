@@ -2,6 +2,7 @@ let prompt_command_no_timeout commands_to_actions
     ?(default = fun _ -> print_endline "I don't recognize that command.")
     ~prompt_message () =
   print_endline prompt_message;
+  Printf.printf "> %!";
   let input = read_line () in
   let action_opt =
     commands_to_actions
@@ -14,7 +15,8 @@ let prompt_command_no_timeout commands_to_actions
     | Some a -> a
     | None -> fun () -> default input
   in
-  action ()
+  action ();
+  print_endline ""
 
 let rec prompt_commands_no_timeout commands_to_actions ?default ~prompt_message
     () =

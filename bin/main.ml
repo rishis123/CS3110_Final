@@ -154,7 +154,7 @@ let unrecognized_input_procedure input =
   print_endline "That is not a valid command.";
   let closest =
     closest_commands input
-    |> List.filter (fun (_, dist) -> dist <= 2.)
+    |> List.filter (fun (_, dist) -> dist <= 3.)
     |> List.map fst
   in
   match List.length closest with
@@ -182,7 +182,7 @@ let login_procedure () =
   print_endline "Type your master password:";
   let pwd = get_hidden_input () in
   if try_login pwd then begin
-    print_endline "Logged in!";
+    print_endline "Logged in!\n";
     Lwt_main.run (logged_in_loop ())
   end
   else print_endline "The password does not match."
