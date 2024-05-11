@@ -2,4 +2,13 @@
  (name test_FinalProject)
  (deps
   (source_tree data))
- (libraries ounit2 ounit2.advanced qcheck FinalProject core unix lwt))
+ (libraries
+  ounit2
+  ounit2.advanced
+  qcheck
+  FinalProject
+  core
+  unix
+  lwt
+  cryptokit
+  yojson))
