@@ -19,10 +19,11 @@ val prompt_commands :
   (string * (unit -> unit)) list ->
   ?default:(string -> unit) ->
   ?timeout_handler:'a TimeoutHandler.t ->
-  string ->
+  prompt_message:string ->
+  unit ->
   'a Lwt.t
-(** [prompt_commands commands_to_actions ?default ~on_timeout message] prompts
-    the user with message, awaiting the commands in a loop, running the
+(** [prompt_commands commands_to_actions ?default ~timeout_handler ~prompt_message]
+    prompts the user with message, awaiting the commands in a loop, running the
     specified action whenever the user enters the given command. If the user
     enters an unrecognized command, default () is run. If [timeout_handler] is
     provided, its timeout is used. *)

@@ -120,7 +120,7 @@ let import_procedure () =
   new_secrets |> List.iter Persistence.write_encryptable;
   Printf.printf "Passwords successfully imported from %s\n%!" path
 
-let logged_in_loop () =
+let logged_in_loop =
   let open PromptCommands in
   prompt_commands
     [
@@ -139,7 +139,9 @@ let logged_in_loop () =
       ("import", import_procedure);
     ]
     ~timeout_handler:(TimeoutHandler.make 300. quit_procedure)
-    "Type a command (you will be logged out after five minutes of inactivity):"
+    ~prompt_message:
+      "Type a command (you will be logged out after five minutes of \
+       inactivity):"
 
 let try_login pwd =
   if FinalProject.MasterPassword.check_master_pwd pwd then
@@ -156,6 +158,23 @@ let login_procedure () =
   end
   else print_endline "The password does not match."
 
+let incorrect_input_procedure x =
+  if
+    x = "add"
+    || x = "list"
+    || x = "findsing"
+    || x = "gen_password"
+    || x = "setpwd"
+    || x = "import"
+    || x = "export"
+    || x = "check_strength"
+    || x = "health_check"
+  then
+    print_endline
+      "Must log in before using these commands -- try 'login' to log in or \
+       'help'"
+  else print_endline "That is not a valid command."
+
 let main_loop () =
   Persistence.set_file_perms ();
   let open PromptCommands in
@@ -167,22 +186,8 @@ let main_loop () =
           print_endline "Must login before accessing other functionalities" );
       ("login", login_procedure);
     ]
-    ~default:(fun x ->
-      if
-        x = "add"
-        || x = "list"
-        || x = "findsing"
-        || x = "gen_password"
-        || x = "setpwd"
-        || x = "import"
-        || x = "export"
-        || x = "check_strength"
-        || x = "health_check"
-      then
-        print_endline
-          "Must log in before using these commands -- try 'login' to log in or \
-           'help'"
-      else print_endline "That is not a valid command.")
-    "Type a command -- quit, help, or login:"
+    ~default:incorrect_input_procedure
+    ~prompt_message:"Type a command -- quit, help, or login:"
+    ()
 
 let _ = main_loop ()
