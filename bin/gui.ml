@@ -3,6 +3,7 @@ module W = Widget
 module L = Layout
 module T = Trigger
 open FinalProject
+module Persistence = Persistence.Default
 
 (** Constants controlling visual aspects of the gui such as font size and
     colors. *)
