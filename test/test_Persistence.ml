@@ -6,16 +6,14 @@ open FinalProject
 let masterpwd_file_path = "data/unencrypted/test_unencryptables"
 let encrypted_file_path = "data/encrypted/test_encryptables"
 
-let set_file_perms () =
-  (* Ensure directories exist *)
-  if not (Sys.file_exists (Filename.dirname masterpwd_file_path)) then
-    Unix.mkdir (Filename.dirname masterpwd_file_path) 0o755;
-  if not (Sys.file_exists (Filename.dirname encrypted_file_path)) then
-    Unix.mkdir (Filename.dirname encrypted_file_path) 0o755;
+(* let set_file_perms () = (* Ensure directories exist *) if not
+   (Sys.file_exists (Filename.dirname masterpwd_file_path)) then Unix.mkdir
+   (Filename.dirname masterpwd_file_path) 0o755; if not (Sys.file_exists
+   (Filename.dirname encrypted_file_path)) then Unix.mkdir (Filename.dirname
+   encrypted_file_path) 0o755;
 
-  (* Set permissions *)
-  Unix.chmod masterpwd_file_path 0o600;
-  Unix.chmod encrypted_file_path 0o600
+   (* Set permissions *) Unix.chmod masterpwd_file_path 0o600; Unix.chmod
+   encrypted_file_path 0o600 *)
 
 (* Note: below are same functions as persistence, but we want to use the above
    file path for testing rather than modify the same ones for the users.*)
@@ -40,7 +38,7 @@ let write_encryptable encryptable =
 let tests =
   [
     ( "Test write encryptable (password) and read it" >:: fun _ ->
-      set_file_perms ();
+      (* set_file_perms (); *)
       let try_pass = Types.Password { name = "monkey"; password = "abc123" } in
       let () = write_encryptable try_pass in
       let mem_list = read_all_encryptable () in
