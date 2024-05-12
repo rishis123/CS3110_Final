@@ -33,19 +33,24 @@ let randomized_tests =
         decrypt (encrypt (Login lgn)) = Login lgn);
     Test.make
       ~name:
-        "If key1 <> key2, then Dec(key2, Enc(key1, password)) is not password."
+        "If key1 <> key2, then Dec(key2, Enc(key1, password)) should not be \
+         password, raise bad padding, or raise json error."
       ~count:200 password_arb (fun pwd ->
         set_key key1;
         let enc = encrypt (Password pwd) in
         set_key key2;
-        decrypt enc <> Password pwd);
+        try decrypt enc <> Password pwd
+        with Cryptokit.Error Bad_padding | Yojson__Common.Json_error _ -> true);
     Test.make
-      ~name:"If key1 <> key2, then Dec(key2, Enc(key1, login)) is not login."
-      ~count:200 login_arb (fun lgn ->
+      ~name:
+        "If key1 <> key2, then Dec(key2, Enc(key1, login)) should not be \
+         login, raise bad padding, or raise json error." ~count:200 login_arb
+      (fun lgn ->
         set_key key1;
         let enc = encrypt (Login lgn) in
         set_key key2;
-        decrypt enc <> Login lgn);
+        try decrypt enc <> Login lgn
+        with Cryptokit.Error Bad_padding | Yojson__Common.Json_error _ -> true);
   ]
 
 let encrypt_test_suite =

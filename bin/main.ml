@@ -10,6 +10,7 @@ let help_msg =
    list: List saved passwords.\n\
    findsing: Autocompletes given name and lists relevant password or login \
    information \n\
+   search: Searches for all relevant passwords or logins \n\
    check_strength: Checks if your password is at risk or not.\n\
    health_check: Checks saved passwords for health or duplicates \n\
    gen_password: Generates password with choice\n\
@@ -45,6 +46,28 @@ let findsing_procedure () =
     List.iter
       (fun x -> print_endline (Types.string_of_encryptable x))
       autocomplete
+
+let search_procedure () =
+  print_endline "Enter search query:";
+  let desired = read_line () in
+  let name_distance_per_len enc =
+    let name = Types.name_of_encryptable enc in
+    EditDistance.min_edit_distance_unit_cost desired name
+    /. float_of_int (String.length name)
+  in
+  let most_relevant =
+    Persistence.read_all_encryptable ()
+    |> List.to_seq
+    |> Util.sorted_by_below_threshold name_distance_per_len 0.6
+    |> List.of_seq
+  in
+  if List.length most_relevant > 0 then begin
+    print_endline "Here are the most relevant matches:";
+    List.iter
+      (fun x -> print_endline (Types.string_of_encryptable x))
+      most_relevant
+  end
+  else print_endline "No matches found."
 
 let gen_password_procedure () = print_endline (Gen_password.gen_password_val ())
 
@@ -126,6 +149,7 @@ let logged_in_actions =
     ("help", help_procedure);
     ("list", list_procedure);
     ("findsing", findsing_procedure);
+    ("search", search_procedure);
     ("gen_password", gen_password_procedure);
     ("add", add_procedure);
     ("add pwd", add_password_procedure);
@@ -137,32 +161,19 @@ let logged_in_actions =
     ("import", import_procedure);
   ]
 
-let closest_commands input =
-  let input_distance =
-    EditDistance.min_edit_distance 1.0
-      (fun x y -> if x = y then 0.0 else 1.)
-      input
-  in
-  let commands = List.map fst logged_in_actions in
-  let commands_and_dists =
-    List.map input_distance commands |> Util.zip commands
-  in
-  let compare_by_distance l r = compare (snd l) (snd r) in
-  List.fast_sort compare_by_distance commands_and_dists
-
 let unrecognized_input_procedure input =
   print_endline "That is not a valid command.";
-  let closest =
-    closest_commands input
-    |> List.filter (fun (_, dist) -> dist <= 3.)
-    |> List.map fst
+  let input_distance = EditDistance.min_edit_distance_unit_cost input in
+  let commands = logged_in_actions |> List.to_seq |> Seq.map fst in
+  let closest_commands =
+    Util.sorted_by_below_threshold input_distance 3. commands |> List.of_seq
   in
-  match List.length closest with
+  match List.length closest_commands with
   | 0 -> ()
-  | 1 -> Printf.printf "Maybe you meant %s?\n" (List.hd closest)
+  | 1 -> Printf.printf "Maybe you meant %s?\n" (List.hd closest_commands)
   | _ ->
       Printf.printf "Maybe you meant one of these: %s?\n"
-        (String.concat ", " closest)
+        (String.concat ", " closest_commands)
 
 let logged_in_loop =
   let open PromptCommands in
@@ -198,6 +209,7 @@ let main_incorrect_input_procedure input =
     || input = "export"
     || input = "check_strength"
     || input = "health_check"
+    || input = "search"
   then
     print_endline
       "Must log in before using these commands -- try 'login' to log in or \

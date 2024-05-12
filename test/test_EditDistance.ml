@@ -60,7 +60,7 @@ let randomized_tests =
         let precondition = String.length str1 = String.length str2 in
         assume precondition;
         let expected_cost =
-          TestUtil.zip (String.to_seq str1) (String.to_seq str2)
+          FinalProject.Util.zip (String.to_seq str1) (String.to_seq str2)
           |> Seq.filter (fun (c1, c2) -> c1 <> c2)
           |> Seq.length
           |> float_of_int
@@ -97,7 +97,7 @@ let randomized_tests =
             (Fun.const @@ Fun.const match_cost)
             str2 str1
         in
-        edit_distance1 = edit_distance2)
+        edit_distance1 = edit_distance2);
   ]
 
 let edit_distance_suite =

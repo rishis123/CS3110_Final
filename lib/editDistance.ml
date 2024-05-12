@@ -32,3 +32,10 @@ let min_edit_distance (gap_penalty : float) (match_cost : char -> char -> float)
   let m = String.length str1 in
   let n = String.length str2 in
   opt m n
+
+let min_edit_distance_unit_cost =
+  min_edit_distance 1.0 (fun x y -> if x = y then 0. else 1.)
+
+let min_edit_distance_unit_cost_case_insensitive =
+  min_edit_distance 1.0 (fun x y ->
+      if Char.lowercase_ascii x = Char.lowercase_ascii y then 0. else 1.)
