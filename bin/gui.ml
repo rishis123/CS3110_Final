@@ -31,6 +31,8 @@ let import_signal = W.empty ~w:0 ~h:0 ()
 let import_complete_signal = W.empty ~w:0 ~h:0 ()
 let export_signal = W.empty ~w:0 ~h:0 ()
 let export_complete_signal = W.empty ~w:0 ~h:0 ()
+let delete_signal = W.empty ~w:0 ~h:0 ()
+let delete_complete_signal = W.empty ~w:0 ~h:0 ()
 
 (** [create_btn s f] creates a button with label text [s] that does [f] when
     clicked. Note: This function does not create a connection, which is
@@ -323,11 +325,40 @@ let update_list_view () =
   in
   list_view := new_list_view
 
+(** [delete_view] is the view shown when a login is deleted. *)
+let delete_view =
+  let input = create_text_input "Enter name" in
+  let delete_btn =
+    create_btn "Delete" (fun () ->
+        let name = W.get_text input in
+        W.set_text input "";
+        Persistence.delete_encryptable_by_name name;
+        Update.push delete_complete_signal)
+  in
+  let label =
+    W.label ~size:label_text_size "Delete a password or login based on its name"
+  in
+  let cancel_btn =
+    create_btn "Cancel" (fun () ->
+        W.set_text input "";
+        Update.push back_home_signal)
+  in
+  L.tower
+    [
+      L.resident ~w:window_width input;
+      L.resident ~w:window_width delete_btn;
+      L.resident ~w:window_width cancel_btn;
+      L.resident ~w:window_width ~h:label_height label;
+    ]
+
 (** [home_view] is the view shown right after the user logs in. *)
 let home_view =
   let label = W.label ~size:label_text_size "You are signed in!" in
   let add_btn =
     create_btn "Add a password" (fun () -> Update.push add_signal)
+  in
+  let delete_btn =
+    create_btn "Delete a password" (fun () -> Update.push delete_signal)
   in
   let list_btn = create_btn "List logins" (fun () -> Update.push list_signal) in
   let gen_pwd_btn =
@@ -347,6 +378,7 @@ let home_view =
     [
       L.resident ~w:window_width ~h:label_height label;
       L.resident ~w:window_width add_btn;
+      L.resident ~w:window_width delete_btn;
       L.resident ~w:window_width list_btn;
       L.resident ~w:window_width gen_pwd_btn;
       L.resident ~w:window_width set_master_pwd_btn;
@@ -422,6 +454,9 @@ let connections =
     create_connection export_signal export_view;
     create_connection export_complete_signal
       (action_complete_view "Export complete");
+    create_connection delete_signal delete_view;
+    create_connection delete_complete_signal
+      (action_complete_view "Deletion complete");
   ]
 
 (** [main ()] is Bogue's main loop. It will display this board until the window
