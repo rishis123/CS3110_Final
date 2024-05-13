@@ -121,13 +121,8 @@ let pwd_length = ref 12
 let update_gen_pwd_view () =
   let get_pwd () =
     if !special_char_on then
-      String.concat ""
-        (List.map Char.escaped
-           (Gen_password.generate_password_with_special !pwd_length []))
-    else
-      String.concat ""
-        (List.map Char.escaped
-           (Gen_password.generate_password_without_special !pwd_length []))
+      GenPassword.generate_password_with_special !pwd_length
+    else GenPassword.generate_password_without_special !pwd_length
   in
   let length_label = W.label ~size:label_text_size "Password length: " in
   let length_input = create_text_input "      " in

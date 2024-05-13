@@ -1,5 +1,5 @@
 open OUnit2
-open FinalProject.Gen_password
+open FinalProject.GenPassword
 
 (*throughout tests -- max 50 lenght password*)
 let gen_20_passwords () =

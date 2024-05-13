@@ -70,7 +70,20 @@ let search_procedure () =
   end
   else print_endline "No matches found."
 
-let gen_password_procedure () = print_endline (Gen_password.gen_password_val ())
+let gen_password_procedure () =
+  print_endline "Choose password length:";
+  let length_choice = int_of_string (read_line ()) in
+
+  print_endline "Allow special characters?";
+  print_endline "1. Yes";
+  print_endline "2. No";
+  let special_choice = int_of_string (read_line ()) in
+
+  (* printing string representation of the returned char list*)
+  match (length_choice, special_choice) with
+  | len, 1 -> print_endline (GenPassword.generate_password_with_special len)
+  | len, 2 -> print_endline (GenPassword.generate_password_without_special len)
+  | _ -> print_endline "Invalid response"
 
 let add_procedure () =
   print_endline
