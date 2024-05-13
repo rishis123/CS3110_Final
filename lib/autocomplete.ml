@@ -17,9 +17,6 @@ let clean_up str =
   in
   clean_chars 0
 
-(** Function that returns true if [str1] and [str2] have at least 3 characters
-    in common. Note that this is not case-sensitive, and doesn't include
-    non-alphanumerics in names.*)
 let compare_words str1 str2 =
   let str1 = clean_up str1 in
   let str2 = clean_up str2 in
@@ -43,9 +40,6 @@ let compare_words str1 str2 =
   in
   iterate 0
 
-(** Returns Type.encryptable list representing every value in the saved
-    passwords/login file with a name sharing at least 3 characters in common
-    with [seek_word]*)
 let autocomplete seek_word =
   let encryptable_list = Persistence.read_all_encryptable () in
   let filtered_list =
@@ -162,13 +156,9 @@ let common_passwords =
     "matrix";
   ]
 
-(* returns true if any overlap exists between the passed in word and the common
-   passwords*)
 let check_strength password_entry =
   List.exists (compare_words password_entry) common_passwords
 
-(* Checks every saved password or login, checking which are secure and which
-   aren't *)
 let check_vulnerabilities () =
   let pwd_list = Persistence.read_all_encryptable () in
 

@@ -1,5 +1,3 @@
-(** Generates a random list of characters [acc] of length [index] containing
-    characters a-z, A-Z, #, $, & (special characters), and 0-9.*)
 let rec generate_password_with_special index acc =
   if index <= 0 then acc
   else
@@ -14,8 +12,6 @@ let rec generate_password_with_special index acc =
     in
     generate_password_with_special (index - 1) (char_val :: acc)
 
-(** Generates a random list of characters [acc] of length [index] containing
-    characters a-z, A-Z, and 0-9 (no special characters). *)
 let rec generate_password_without_special index acc =
   if index <= 0 then acc
   else
@@ -29,8 +25,6 @@ let rec generate_password_without_special index acc =
     in
     generate_password_without_special (index - 1) (char_val :: acc)
 
-(** Generates a password of length [length_choice], with the user's choice of
-    special characters (#, $, and &) or not*)
 let gen_password_val () =
   print_endline "Choose password length:";
   let length_choice = int_of_string (read_line ()) in

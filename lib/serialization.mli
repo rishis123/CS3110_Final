@@ -17,4 +17,7 @@ val encryptable_of_string_opt : string -> encryptable option
     [Types.encryptable]. *)
 
 val json_of_encrypted : encrypted -> Yojson.Basic.t
+(** [json_of_encrypted enc_data] is the json representing [enc_data]. *)
+
 val encrypted_of_json : Yojson.Basic.t -> encrypted
+(** [encrypted_of_json json] is the encrypted data represented by [json]. *)
