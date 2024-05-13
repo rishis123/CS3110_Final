@@ -1,3 +1,9 @@
+val password_arb : FinalProject.Types.password QCheck.arbitrary
+(** [password_arb] is an arbitrary password. *)
+
+val login_arb : FinalProject.Types.login QCheck.arbitrary
+(** [login_arb] is an arbitrary login. *)
+
 val delete_recursive : string -> unit
 (** [delete_recursive dir_path] deletes the directory at [dir_path] along with
     all of its subdirectories. Precondition: the directory at [dir_path] must

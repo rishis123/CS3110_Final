@@ -1,3 +1,20 @@
+open FinalProject.Types
+
+let password_arb =
+  let open QCheck in
+  Gen.map
+    (fun (name, password) -> { name; password })
+    (Gen.pair Gen.small_string Gen.string)
+  |> make
+
+let login_arb =
+  let open QCheck in
+  Gen.map
+    (fun (name, username, password, url) -> { name; username; password; url })
+    (Gen.quad Gen.small_string Gen.small_string Gen.string
+       (Gen.opt Gen.small_string))
+  |> make
+
 let rec delete_recursive dir_path =
   (* Implementation adapted from https://stackoverflow.com/a/56344603/13160488,
      accessed 2024-04-20 *)

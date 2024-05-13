@@ -1,24 +1,10 @@
 open OUnit2
 open FinalProject.Types
 open FinalProject.Encrypt
+open TestUtil
 
 let key1 = "password123"
 let key2 = "skibidi dop dop dop yes yes"
-
-let password_arb =
-  let open QCheck in
-  Gen.map
-    (fun (name, password) -> { name; password })
-    (Gen.pair Gen.small_string Gen.string)
-  |> make
-
-let login_arb =
-  let open QCheck in
-  Gen.map
-    (fun (name, username, password, url) -> { name; username; password; url })
-    (Gen.quad Gen.small_string Gen.small_string Gen.string
-       (Gen.opt Gen.small_string))
-  |> make
 
 let randomized_tests =
   let open QCheck in
