@@ -74,17 +74,18 @@ module Make (Dirs : Directories) = struct
      encrypts them (assuming encryption function always yields the same output).
      Then, searches the BatFile for it, and removes it.*)
   let delete_encryptable_by_name encrypt_val_name =
-    let encryptable_seq = read_all_encryptable_seq () in
+    let encryptable_seq = read_all_encryptable () in
     let filtered_seq =
-      Seq.filter
-        (fun encryptable -> name_of_encryptable encryptable = encrypt_val_name)
+      List.filter
+        (fun encryptable -> name_of_encryptable encryptable <> encrypt_val_name)
         encryptable_seq
     in
-    let encrypted_filtered_seq = Seq.map Encrypt.encrypt filtered_seq in
+    let encrypted_filtered_seq = List.map Encrypt.encrypt filtered_seq in
     let encrypted_filtered_lines =
-      Seq.map Serialization.json_of_encrypted encrypted_filtered_seq
+      List.map Serialization.json_of_encrypted encrypted_filtered_seq
     in
-    Yojson.Basic.seq_to_file encrypted_file_path encrypted_filtered_lines
+    Yojson.Basic.seq_to_file encrypted_file_path
+      (List.to_seq encrypted_filtered_lines)
 end
 
 module DefaultDir = struct
