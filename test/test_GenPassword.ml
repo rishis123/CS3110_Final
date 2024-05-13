@@ -37,8 +37,8 @@ let tests =
             distinct := false
         done
       done;
-      assert_bool "Not all same" !distinct (* only true if they are the same *)
-    );
+      assert_bool "At least 2 passwords are identical"
+        !distinct (* only true if they are the same *) );
     ( "Test none of 5 non-spec passwords have non-alphanumerics" >:: fun _ ->
       let valid = ref true in
       for _ = 0 to 4 do
@@ -79,4 +79,25 @@ let tests =
       assert_bool "Contain non-valid symbols" !valid );
   ]
 
-let gen_password_suite = "gen password suite" >::: tests
+let qcheck_tests =
+  let open QCheck in
+  [
+    Test.make
+      ~name:
+        "Randomly generated passwords with only alphanumeric characters do not \
+         consist of all the same character" ~count:200 (int_range 20 50)
+      (fun len ->
+        let pwd = generate_password_without_special len in
+        String.exists (fun c -> c <> pwd.[0]) pwd);
+    Test.make
+      ~name:
+        "Randomly generated passwords with alphanumeric and special characters \
+         do not consist of all the same character" ~count:200 (int_range 20 50)
+      (fun len ->
+        let pwd = generate_password_with_special len in
+        String.exists (fun c -> c <> pwd.[0]) pwd);
+  ]
+
+let gen_password_suite =
+  "gen password suite"
+  >::: tests @ QCheck_runner.to_ounit2_test_list qcheck_tests
