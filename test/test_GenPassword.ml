@@ -15,12 +15,8 @@ let gen_20_passwords () =
     (* want int between 1 and 2*)
     let password =
       match (len, spec_choice) with
-      | len, 1 ->
-          String.concat ""
-            (List.map Char.escaped (generate_password_with_special len []))
-      | len, 2 ->
-          String.concat ""
-            (List.map Char.escaped (generate_password_without_special len []))
+      | len, 1 -> generate_password_with_special len
+      | len, 2 -> generate_password_without_special len
       | _ -> "Invalid arguments"
     in
     list_of_passwords := password :: !list_of_passwords
@@ -47,10 +43,7 @@ let tests =
       let valid = ref true in
       for _ = 0 to 4 do
         let len = Random.int 50 in
-        let password_new =
-          String.concat ""
-            (List.map Char.escaped (generate_password_without_special len []))
-        in
+        let password_new = generate_password_without_special len in
         if
           String.exists
             (fun c ->
@@ -68,10 +61,7 @@ let tests =
       let valid = ref true in
       for _ = 0 to 4 do
         let len = Random.int 50 in
-        let password_new =
-          String.concat ""
-            (List.map Char.escaped (generate_password_with_special len []))
-        in
+        let password_new = generate_password_with_special len in
         if
           String.exists
             (fun c ->
