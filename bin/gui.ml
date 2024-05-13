@@ -257,7 +257,9 @@ let set_master_pwd_view =
         Update.push master_pwd_change_complete_signal)
   in
   let label =
-    W.label ~size:label_text_size "Please enter the new master password"
+    W.rich_text ~size:label_text_size ~h:label_height
+      Text_display.(
+        page [ para ""; para "Delete a password or login based on its name." ])
   in
   let cancel_btn =
     create_btn "Cancel" (fun () -> Update.push back_home_signal)
