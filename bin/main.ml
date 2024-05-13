@@ -1,4 +1,5 @@
 open FinalProject
+module Persistence = Persistence.Default
 
 let quit_procedure () =
   print_endline "Exited the program";

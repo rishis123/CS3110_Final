@@ -1,3 +1,5 @@
+module Persistence = Persistence.Default
+
 (** Function to remove all non-alphanumeric characters from the word [str], and
     make it lowercase. *)
 let clean_up str =
