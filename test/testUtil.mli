@@ -1,8 +1,11 @@
 val password_arb : FinalProject.Types.password QCheck.arbitrary
-(** [password_arb] is an arbitrary password. *)
+(** [password_arb] is an arbitrary password, where the name field ranges from
+    length 10 to 30, and the password field ranges from length 20 to 50. *)
 
 val login_arb : FinalProject.Types.login QCheck.arbitrary
-(** [login_arb] is an arbitrary login. *)
+(** [login_arb] is an arbitrary login, where the name and username fields range
+    from length 10 to 30, the password field ranges from length 20 to 50, and
+    the url field ranges from length 50 to 100. *)
 
 val delete_recursive : string -> unit
 (** [delete_recursive dir_path] deletes the directory at [dir_path] along with
@@ -24,3 +27,5 @@ val run_timeout : int -> (unit -> unit) -> bool
     it was halted. *)
 
 val conf_use_sequential_runner : unit -> unit
+(** [conf_use_sequential_runner] configures OUnit to run unit tests
+    sequentially. *)
