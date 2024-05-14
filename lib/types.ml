@@ -2,7 +2,7 @@ type master_password_hash = string
 (** [master_password_hash] is the type of a hash of the master password, used
     for checking validity at startup *)
 
-(** [unencryptable] is the type of any storable data that is not encrypted *)
+(** [unencryptable] is the type of any storable data that is not encrypted. *)
 type unencryptable = MasterPasswordHash of master_password_hash
 
 type password = {
@@ -26,9 +26,16 @@ type encryptable =
   | Password of password
   | Login of login
 
+(** [name_of_encryptable entry] retrieves the name associated with [entry]. *)
 let name_of_encryptable = function
   | Password { name; _ } -> name
   | Login { name; _ } -> name
+
+(** [password_of_encryptable entry] retrieves the secret password associated
+    with [entry]. *)
+let password_of_encryptable = function
+  | Password { password; _ } -> password
+  | Login { password; _ } -> password
 
 (** [string_of_password p] is a string representation of [p] for logging or
     debugging. *)
@@ -61,10 +68,14 @@ let string_of_master_password_hash h : string = h
 let string_of_unencryptable = function
   | MasterPasswordHash h -> string_of_master_password_hash h
 
+(** [encrypted_form] is the type indicating whether the encrypted data is a
+    login or a password. *)
 type encrypted_form =
   | EncryptedLogin
   | EncryptedPassword
 
+(** [encrypted] is the type that records all data and metadata associated with
+    the encrypted entry. *)
 type encrypted =
   | EncryptedString of {
       form : encrypted_form;

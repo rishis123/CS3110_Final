@@ -43,7 +43,7 @@ module Parser = struct
     | [ "Title"; "URL"; "Username"; "Password"; "Notes"; "OTPAuth" ] ->
         parse_safari_csv
     | header when header = [ "type"; "name"; "username"; "password"; "url" ] ->
-      parse_proprietary_csv
+        parse_proprietary_csv
     | _ -> raise (ImportExn UnsupportedHeaders)
 end
 

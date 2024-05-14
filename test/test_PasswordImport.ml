@@ -9,7 +9,7 @@ let assert_files_equal path1 path2 =
 
 let with_import_files f ctxt =
   let open Core in
-  TestUtil.contents_recursive "data" ~include_dots:false
+  TestUtil.contents_recursive "data/password_import" ~include_dots:false
   |> List.iter ~f:(fun path ->
          f ctxt
            (* Cannot partial apply here as we want to bind ctxt each loop
@@ -21,10 +21,10 @@ let with_import_files f ctxt =
 let with_export_files f ctxt =
   let open Core in
   TestUtil.contents_recursive
-    "data/proprietary"
-    (* Using only the "data/proprietary" directory because files will match the
-       proprietary format, which is not necessarily the same as those exported
-       from other programs *)
+    "data/password_import/proprietary"
+    (* Using only the "data/password_import/proprietary" directory because files
+       will match the proprietary format, which is not necessarily the same as
+       those exported from other programs *)
     ~include_dots:false
   |> List.iter ~f:(fun path ->
          f ctxt
@@ -64,8 +64,8 @@ let dummy_encryptable_list =
 let expected_proprietary_contents =
   let open Types in
   [
-    ("data/proprietary/empty.csv", []);
-    ( "data/proprietary/test1.csv",
+    ("data/password_import/proprietary/empty.csv", []);
+    ( "data/password_import/proprietary/test1.csv",
       [
         Login
           {
@@ -111,7 +111,7 @@ let expected_proprietary_contents =
 let expected_external_contents =
   let open Types in
   [
-    ( "data/chrome/Chrome Passwords.csv",
+    ( "data/password_import/chrome/Chrome Passwords.csv",
       [
         Login
           {
@@ -128,9 +128,9 @@ let expected_external_contents =
             password = "passwordmcpasswordface";
           };
       ] );
-    ("data/chrome/empty.csv", []);
-    ("data/safari/empty.csv", []);
-    ( "data/safari/Passwords.csv",
+    ("data/password_import/chrome/empty.csv", []);
+    ("data/password_import/safari/empty.csv", []);
+    ( "data/password_import/safari/Passwords.csv",
       [
         Login
           {
@@ -143,7 +143,9 @@ let expected_external_contents =
   ]
 
 let expected_exported_contents = expected_proprietary_contents
-let expected_imported_contents = expected_proprietary_contents @ expected_external_contents
+
+let expected_imported_contents =
+  expected_proprietary_contents @ expected_external_contents
 
 let tests =
   [

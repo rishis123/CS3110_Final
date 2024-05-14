@@ -12,34 +12,22 @@ module type Persistence = sig
   val read_all_encryptable : unit -> Types.encryptable list
   val write_encryptable : Types.encryptable -> unit
   val delete_encryptable_by_name : string -> unit
-
   val set_file_perms : unit -> unit
-  (** [set_file_perms ()] sets the data files to read and write allowed only for
-      the owner. *)
 end
 
 module Make (Dirs : Directories) = struct
-  (* Filename for file that stores master password in hashed form *)
   let masterpwd_file_path = Dirs.masterpwd_file_path
-
-  (** Filename for file that stores all encrypted data. Invariant: this data
-      matches the schema in schemas/encryptables-schema.json *)
   let encrypted_file_path = Dirs.encrypted_file_path
 
-  (** [set_file_perms] sets the data files to read and write allowed only for
-      the owner. *)
   let set_file_perms () =
     Unix.chmod masterpwd_file_path Dirs.permission;
     Unix.chmod encrypted_file_path Dirs.permission
 
-  (** Precondition: the hash is in the first line of [masterpwd_file_path]. *)
   let read_master_password_hash () =
     let lines = BatList.of_enum (BatFile.lines_of masterpwd_file_path) in
     let hash = BatList.hd lines in
     hash
 
-  (* Write unencryptable information i.e. master password to memory for first
-     time. Presumably passed into function in hashed form. *)
   let write_unencryptable master_value =
     match master_value with
     | Types.MasterPasswordHash hash ->
@@ -52,7 +40,6 @@ module Make (Dirs : Directories) = struct
 
   let read_all_encryptable () = read_all_encryptable_seq () |> List.of_seq
 
-  (* Writes either password or login information to file*)
   let write_encryptable encryptable =
     let old_entries =
       Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path
@@ -74,17 +61,18 @@ module Make (Dirs : Directories) = struct
      encrypts them (assuming encryption function always yields the same output).
      Then, searches the BatFile for it, and removes it.*)
   let delete_encryptable_by_name encrypt_val_name =
-    let encryptable_seq = read_all_encryptable_seq () in
+    let encryptable_seq = read_all_encryptable () in
     let filtered_seq =
-      Seq.filter
-        (fun encryptable -> name_of_encryptable encryptable = encrypt_val_name)
+      List.filter
+        (fun encryptable -> name_of_encryptable encryptable <> encrypt_val_name)
         encryptable_seq
     in
-    let encrypted_filtered_seq = Seq.map Encrypt.encrypt filtered_seq in
+    let encrypted_filtered_seq = List.map Encrypt.encrypt filtered_seq in
     let encrypted_filtered_lines =
-      Seq.map Serialization.json_of_encrypted encrypted_filtered_seq
+      List.map Serialization.json_of_encrypted encrypted_filtered_seq
     in
-    Yojson.Basic.seq_to_file encrypted_file_path encrypted_filtered_lines
+    Yojson.Basic.seq_to_file encrypted_file_path
+      (List.to_seq encrypted_filtered_lines)
 end
 
 module DefaultDir = struct

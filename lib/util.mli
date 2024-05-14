@@ -26,3 +26,7 @@ val sorted_by_below_threshold : ('a -> 'b) -> 'b -> 'a Seq.t -> 'a Seq.t
 (** [sorted_by_below_threshold selector threshold list] returns a sequence of
     elements of [list] for which [selector element <= threshold]. The elements
     are returned in decreasing value of [selector element] *)
+
+val substring : string -> string -> bool
+(** [substring s1 s2] is [true] is [s2] is a substring of [s1], and [false]
+    otherwise. *)

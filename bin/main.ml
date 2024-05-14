@@ -7,7 +7,8 @@ let quit_procedure () =
 
 let help_msg =
   "Here are the available commands:\n\n\
-   add: Add a new password.\n\
+   add: Add a new login or password.\n\
+   delete: Delete a login or password.\n\
    list: List saved passwords.\n\
    findsing: Autocompletes given name and lists relevant password or login \
    information \n\
@@ -34,7 +35,12 @@ let help_procedure () = print_endline help_msg
 
 let list_procedure () =
   let pwd_list = Persistence.read_all_encryptable () in
-  List.iter (fun x -> print_endline (Types.string_of_encryptable x)) pwd_list
+  match List.length pwd_list with
+  | 0 -> print_endline "No saved logins."
+  | _ ->
+      List.iter
+        (fun x -> print_endline (Types.string_of_encryptable x))
+        pwd_list
 
 let findsing_procedure () =
   print_endline "Enter what you think the name of your password or login is";
@@ -70,7 +76,20 @@ let search_procedure () =
   end
   else print_endline "No matches found."
 
-let gen_password_procedure () = print_endline (Gen_password.gen_password_val ())
+let gen_password_procedure () =
+  print_endline "Choose password length:";
+  let length_choice = int_of_string (read_line ()) in
+
+  print_endline "Allow special characters?";
+  print_endline "1. Yes";
+  print_endline "2. No";
+  let special_choice = int_of_string (read_line ()) in
+
+  (* printing string representation of the returned char list*)
+  match (length_choice, special_choice) with
+  | len, 1 -> print_endline (GenPassword.generate_password_with_special len)
+  | len, 2 -> print_endline (GenPassword.generate_password_without_special len)
+  | _ -> print_endline "Invalid response"
 
 let add_procedure () =
   print_endline
@@ -98,6 +117,13 @@ let add_login_procedure () =
   let encryptable = Types.Login { name; username; password; url } in
   Persistence.write_encryptable encryptable
 
+let delete_procedure () =
+  print_endline
+    "What is the name of the login or password you would like to delete?";
+  let name = read_line () in
+  Persistence.delete_encryptable_by_name name;
+  Printf.printf "Successfully deleted the login %s" name
+
 let set_pwd_procedure () =
   print_endline "Type a new password: ";
   let newpwd = get_hidden_input () in
@@ -115,20 +141,36 @@ let set_pwd_procedure () =
 
 let check_strength_procedure () =
   print_endline "Enter your existing password.";
-  let existing = read_line () in
-  if Autocomplete.check_strength existing then
-    print_endline
-      "Your password is a security risk -- try one of our randomly generated \
-       passwords by calling gen_password"
-  else print_endline "Your password is fine!"
+  let existing = get_hidden_input () in
+  if%lwt StrengthCheck.is_weak existing then
+    Lwt.return
+      (print_endline
+         "Your password is a security risk -- try one of our randomly \
+          generated passwords by calling gen_password!")
+  else Lwt.return (print_endline "Your password is fine!")
 
 let health_check_procedure () =
-  let output_lst = Autocomplete.check_vulnerabilities () in
-  let output_printer str =
-    Printf.printf "Your password or login %s is not secure\n" str;
-    ()
+  let open Batteries in
+  let open Lwt in
+  let%lwt weak_encryptables =
+    Persistence.read_all_encryptable ()
+    |> Lwt_list.filter_p (StrengthCheck.is_weak % Types.password_of_encryptable)
   in
-  List.iter output_printer output_lst
+  let output_printer enc =
+    Printf.printf "Your password for %s (%s) is not secure\n"
+      (Types.name_of_encryptable enc)
+      (Types.password_of_encryptable enc)
+  in
+  match List.length weak_encryptables with
+  | 0 ->
+      print_endline "No weak logins or passwords found!";
+      return_unit
+  | _ -> begin
+      List.iter output_printer weak_encryptables;
+      print_endline
+        "Try randomly generating a password with the gen_password command!";
+      return_unit
+    end
 
 let export_procedure () =
   print_endline "Type the path to which you would like to export: ";
@@ -144,7 +186,7 @@ let import_procedure () =
   new_secrets |> List.iter Persistence.write_encryptable;
   Printf.printf "Passwords successfully imported from %s\n%!" path
 
-let logged_in_actions =
+let synchronous_logged_in_actions =
   [
     ("quit", quit_procedure);
     ("help", help_procedure);
@@ -155,17 +197,26 @@ let logged_in_actions =
     ("add", add_procedure);
     ("add pwd", add_password_procedure);
     ("add login", add_login_procedure);
+    ("delete", delete_procedure);
     ("setpwd", set_pwd_procedure);
-    ("check_strength", check_strength_procedure);
-    ("health_check", health_check_procedure);
     ("export", export_procedure);
     ("import", import_procedure);
+  ]
+
+let async_logged_in_actions =
+  [
+    ("check_strength", check_strength_procedure);
+    ("health_check", health_check_procedure);
   ]
 
 let unrecognized_input_procedure input =
   print_endline "That is not a valid command.";
   let input_distance = EditDistance.min_edit_distance_unit_cost input in
-  let commands = logged_in_actions |> List.to_seq |> Seq.map fst in
+  let async_commands = async_logged_in_actions |> List.to_seq |> Seq.map fst in
+  let sync_commands =
+    synchronous_logged_in_actions |> List.to_seq |> Seq.map fst
+  in
+  let commands = Seq.append sync_commands async_commands in
   let closest_commands =
     Util.sorted_by_below_threshold input_distance 3. commands |> List.of_seq
   in
@@ -178,7 +229,9 @@ let unrecognized_input_procedure input =
 
 let logged_in_loop =
   let open PromptCommands in
-  prompt_commands logged_in_actions ~default:unrecognized_input_procedure
+  prompt_commands ~synchronous_commands_to_actions:synchronous_logged_in_actions
+    ~async_commands_to_actions:async_logged_in_actions
+    ~default:unrecognized_input_procedure
     ~timeout_handler:(TimeoutHandler.make 300. quit_procedure)
     ~prompt_message:
       "Type a command (you will be logged out after five minutes of \
@@ -218,16 +271,20 @@ let main_incorrect_input_procedure input =
   else print_endline "That is not a valid command."
 
 let main_loop () =
+  print_endline "Loading...";
+  print_endline "Please wait a few moments.";
   Persistence.set_file_perms ();
+  StrengthCheck.init_async ();
   let open PromptCommands in
   prompt_commands
-    [
-      ("quit", quit_procedure);
-      ( "help",
-        fun () ->
-          print_endline "Must login before accessing other functionalities" );
-      ("login", login_procedure);
-    ]
+    ~synchronous_commands_to_actions:
+      [
+        ("quit", quit_procedure);
+        ( "help",
+          fun () ->
+            print_endline "Must login before accessing other functionalities" );
+        ("login", login_procedure);
+      ]
     ~default:main_incorrect_input_procedure
     ~prompt_message:"Type a command -- quit, help, or login:" ()
 

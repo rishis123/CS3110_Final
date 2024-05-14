@@ -1,6 +1,8 @@
-let prompt_command_no_timeout commands_to_actions
+let prompt_command_no_timeout
+    (commands_to_actions : (string * (unit -> unit Lwt.t)) list)
     ?(default = fun _ -> print_endline "I don't recognize that command.")
     ~prompt_message () =
+  let open Lwt in
   print_endline prompt_message;
   Printf.printf "> %!";
   let input = read_line () in
@@ -13,16 +15,16 @@ let prompt_command_no_timeout commands_to_actions
   let action =
     match action_opt with
     | Some a -> a
-    | None -> fun () -> default input
+    | None -> fun () -> return (default input)
   in
-  action ();
-  print_endline ""
+  let%lwt () = action () in
+  print_endline "";
+  return_unit
 
 let rec prompt_commands_no_timeout commands_to_actions ?default ~prompt_message
     () =
   let%lwt () =
-    Lwt.return
-      (prompt_command_no_timeout commands_to_actions ?default ~prompt_message ())
+    prompt_command_no_timeout commands_to_actions ?default ~prompt_message ()
   in
   prompt_commands_no_timeout commands_to_actions ?default ~prompt_message ()
 
@@ -43,11 +45,12 @@ let rec prompt_commands_with_timeout commands_to_actions ?default
     ~timeout_handler ~prompt_message () =
   let open Lwt in
   let prompt_promise =
-    let%lwt () =
+    let%lwt action_promise =
       Lwt_preemptive.detach
         (prompt_command_no_timeout commands_to_actions ?default ~prompt_message)
         ()
     in
+    let%lwt () = action_promise in
     return_true
   in
   let timeout_promise =
@@ -63,7 +66,15 @@ let rec prompt_commands_with_timeout commands_to_actions ?default
     return (on_timeout timeout_handler ())
   end
 
-let prompt_commands commands_to_actions ?default ?timeout_handler =
+let prompt_commands ?(synchronous_commands_to_actions = [])
+    ?(async_commands_to_actions = []) ?default ?timeout_handler =
+  let wrap_action_in_Lwt =
+    List.map (fun (name, action) -> (name, fun () -> Lwt.return (action ())))
+  in
+  let commands_to_actions =
+    async_commands_to_actions
+    @ wrap_action_in_Lwt synchronous_commands_to_actions
+  in
   match timeout_handler with
   | Some timeout_handler ->
       prompt_commands_with_timeout commands_to_actions ?default ~timeout_handler
