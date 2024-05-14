@@ -139,6 +139,10 @@ let set_pwd_procedure () =
   let () = Persistence.write_unencryptable unencrypt_master_pwd in
   print_endline ("The password input was :" ^ newpwd)
 
+module StrengthCheck = StrengthCheck.Make (struct
+  let common_passwords_path = "data/xato-net-10-million-passwords.txt"
+end)
+
 let check_strength_procedure () =
   print_endline "Enter your existing password.";
   let existing = get_hidden_input () in

@@ -96,3 +96,6 @@ let conf_use_sequential_runner () =
       with Stdlib.Arg.Bad bad_message ->
         print_endline bad_message;
         raise (Stdlib.Arg.Bad bad_message)
+
+let sorted_equals lst1 lst2 = 
+  (List.sort compare lst1) = (List.sort compare lst2)

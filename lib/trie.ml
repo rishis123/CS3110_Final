@@ -14,10 +14,27 @@ let idx_of_char chr =
   else if 97 <= code && code <= 122 then code - 97
   else if 48 <= code && code <= 57 then
     code - 48 + 26 (* offset numbers to after letters *)
-  else 36
-  (* else failwith "Invalid character" *)
+  else
+    match chr with
+    | '!' -> 36
+    | '@' -> 37
+    | '#' -> 38
+    | '$' -> 39
+    | '%' -> 40
+    | '^' -> 41
+    | '&' -> 42
+    | '*' -> 43
+    | '(' -> 44
+    | ')' -> 45
+    | '?' -> 46
+    | '.' -> 47
+    | '-' -> 48
+    | '_' -> 49
+    | '~' -> 50
+    | ' ' -> 51
+    | _ -> failwith "Invalid character"
 
-let make () = Array.make 37 Empty
+let make () = Array.make 52 Empty
 
 let rec _insert ?(str_start_idx = 0) str trie =
   if String.length str = str_start_idx then ()
@@ -28,7 +45,7 @@ let rec _insert ?(str_start_idx = 0) str trie =
     | NonTerminal nt ->
         let subtrie = nt.children in
         _insert str subtrie ~str_start_idx:(str_start_idx + 1);
-        if String.length str - 1 = str_start_idx then nt.is_terminal <- true;
+        if String.length str - 1 = str_start_idx then nt.is_terminal <- true
     | Empty ->
         let subtrie = make () in
         _insert str subtrie ~str_start_idx:(str_start_idx + 1);
@@ -53,13 +70,15 @@ let of_file path =
   trie
 
 let rec _mem ?(str_start_idx = 0) str trie =
-  let array_idx = idx_of_char str.[str_start_idx] in
-  match trie.(array_idx) with
-  | NonTerminal nt ->
-      let next_str_idx = str_start_idx + 1 in
-      if String.length str = next_str_idx then nt.is_terminal
-      else _mem ~str_start_idx:next_str_idx str nt.children
-  | Empty -> false
+  if str = "" then false
+  else
+    let array_idx = idx_of_char str.[str_start_idx] in
+    match trie.(array_idx) with
+    | NonTerminal nt ->
+        let next_str_idx = str_start_idx + 1 in
+        if String.length str = next_str_idx then nt.is_terminal
+        else _mem ~str_start_idx:next_str_idx str nt.children
+    | Empty -> false
 
 let mem str trie = _mem str trie
 
