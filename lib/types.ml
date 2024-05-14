@@ -31,6 +31,12 @@ let name_of_encryptable = function
   | Password { name; _ } -> name
   | Login { name; _ } -> name
 
+(** [password_of_encryptable entry] retrieves the secret password associated
+    with [entry]. *)
+let password_of_encryptable = function
+  | Password { password; _ } -> password
+  | Login { password; _ } -> password
+
 (** [string_of_password p] is a string representation of [p] for logging or
     debugging. *)
 let string_of_password (p : password) : string =

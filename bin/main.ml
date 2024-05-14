@@ -37,7 +37,10 @@ let list_procedure () =
   let pwd_list = Persistence.read_all_encryptable () in
   match List.length pwd_list with
   | 0 -> print_endline "No saved logins."
-  | _ -> List.iter (fun x -> print_endline (Types.string_of_encryptable x)) pwd_list
+  | _ ->
+      List.iter
+        (fun x -> print_endline (Types.string_of_encryptable x))
+        pwd_list
 
 let findsing_procedure () =
   print_endline "Enter what you think the name of your password or login is";
@@ -114,8 +117,9 @@ let add_login_procedure () =
   let encryptable = Types.Login { name; username; password; url } in
   Persistence.write_encryptable encryptable
 
-let delete_procedure () = 
-  print_endline "What is the name of the login or password you would like to delete?";
+let delete_procedure () =
+  print_endline
+    "What is the name of the login or password you would like to delete?";
   let name = read_line () in
   Persistence.delete_encryptable_by_name name;
   Printf.printf "Successfully deleted the login %s" name
@@ -137,20 +141,31 @@ let set_pwd_procedure () =
 
 let check_strength_procedure () =
   print_endline "Enter your existing password.";
-  let existing = read_line () in
-  if Autocomplete.check_strength existing then
+  let existing = get_hidden_input () in
+  if StrengthCheck.is_weak existing then
     print_endline
       "Your password is a security risk -- try one of our randomly generated \
-       passwords by calling gen_password"
+       passwords by calling gen_password!"
   else print_endline "Your password is fine!"
 
 let health_check_procedure () =
-  let output_lst = Autocomplete.check_vulnerabilities () in
-  let output_printer str =
-    Printf.printf "Your password or login %s is not secure\n" str;
-    ()
+  let open Batteries in
+  let weak_encryptables =
+    Persistence.read_all_encryptable ()
+    |> List.filter (StrengthCheck.is_weak % Types.password_of_encryptable)
   in
-  List.iter output_printer output_lst
+  let output_printer enc =
+    Printf.printf "Your password for %s (%s) is not secure\n"
+      (Types.name_of_encryptable enc)
+      (Types.password_of_encryptable enc)
+  in
+  match List.length weak_encryptables with
+  | 0 -> print_endline "No weak logins or passwords found!"
+  | _ -> begin
+      List.iter output_printer weak_encryptables;
+      print_endline
+        "Try randomly generating a password with the gen_password command!"
+    end
 
 let export_procedure () =
   print_endline "Type the path to which you would like to export: ";
@@ -241,7 +256,10 @@ let main_incorrect_input_procedure input =
   else print_endline "That is not a valid command."
 
 let main_loop () =
+  print_endline "Loading...";
+  print_endline "Please wait a few moments.";
   Persistence.set_file_perms ();
+  StrengthCheck.init ();
   let open PromptCommands in
   prompt_commands
     [
