@@ -1,8 +1,8 @@
 (library
  (inline_tests)
  (name FinalProject)
- (libraries batteries cryptokit csv yojson safepass)
+ (libraries batteries cryptokit csv yojson safepass lwt.unix)
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_inline_test)))
+  (pps ppx_inline_test lwt_ppx)))

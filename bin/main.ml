@@ -142,17 +142,19 @@ let set_pwd_procedure () =
 let check_strength_procedure () =
   print_endline "Enter your existing password.";
   let existing = get_hidden_input () in
-  if StrengthCheck.is_weak existing then
-    print_endline
-      "Your password is a security risk -- try one of our randomly generated \
-       passwords by calling gen_password!"
-  else print_endline "Your password is fine!"
+  if%lwt StrengthCheck.is_weak existing then
+    Lwt.return
+      (print_endline
+         "Your password is a security risk -- try one of our randomly \
+          generated passwords by calling gen_password!")
+  else Lwt.return (print_endline "Your password is fine!")
 
 let health_check_procedure () =
   let open Batteries in
-  let weak_encryptables =
+  let open Lwt in
+  let%lwt weak_encryptables =
     Persistence.read_all_encryptable ()
-    |> List.filter (StrengthCheck.is_weak % Types.password_of_encryptable)
+    |> Lwt_list.filter_p (StrengthCheck.is_weak % Types.password_of_encryptable)
   in
   let output_printer enc =
     Printf.printf "Your password for %s (%s) is not secure\n"
@@ -160,11 +162,14 @@ let health_check_procedure () =
       (Types.password_of_encryptable enc)
   in
   match List.length weak_encryptables with
-  | 0 -> print_endline "No weak logins or passwords found!"
+  | 0 ->
+      print_endline "No weak logins or passwords found!";
+      return_unit
   | _ -> begin
       List.iter output_printer weak_encryptables;
       print_endline
-        "Try randomly generating a password with the gen_password command!"
+        "Try randomly generating a password with the gen_password command!";
+      return_unit
     end
 
 let export_procedure () =
@@ -181,7 +186,7 @@ let import_procedure () =
   new_secrets |> List.iter Persistence.write_encryptable;
   Printf.printf "Passwords successfully imported from %s\n%!" path
 
-let logged_in_actions =
+let synchronous_logged_in_actions =
   [
     ("quit", quit_procedure);
     ("help", help_procedure);
@@ -194,16 +199,24 @@ let logged_in_actions =
     ("add login", add_login_procedure);
     ("delete", delete_procedure);
     ("setpwd", set_pwd_procedure);
-    ("check_strength", check_strength_procedure);
-    ("health_check", health_check_procedure);
     ("export", export_procedure);
     ("import", import_procedure);
+  ]
+
+let async_logged_in_actions =
+  [
+    ("check_strength", check_strength_procedure);
+    ("health_check", health_check_procedure);
   ]
 
 let unrecognized_input_procedure input =
   print_endline "That is not a valid command.";
   let input_distance = EditDistance.min_edit_distance_unit_cost input in
-  let commands = logged_in_actions |> List.to_seq |> Seq.map fst in
+  let async_commands = async_logged_in_actions |> List.to_seq |> Seq.map fst in
+  let sync_commands =
+    synchronous_logged_in_actions |> List.to_seq |> Seq.map fst
+  in
+  let commands = Seq.append sync_commands async_commands in
   let closest_commands =
     Util.sorted_by_below_threshold input_distance 3. commands |> List.of_seq
   in
@@ -216,7 +229,9 @@ let unrecognized_input_procedure input =
 
 let logged_in_loop =
   let open PromptCommands in
-  prompt_commands logged_in_actions ~default:unrecognized_input_procedure
+  prompt_commands ~synchronous_commands_to_actions:synchronous_logged_in_actions
+    ~async_commands_to_actions:async_logged_in_actions
+    ~default:unrecognized_input_procedure
     ~timeout_handler:(TimeoutHandler.make 300. quit_procedure)
     ~prompt_message:
       "Type a command (you will be logged out after five minutes of \
@@ -259,16 +274,17 @@ let main_loop () =
   print_endline "Loading...";
   print_endline "Please wait a few moments.";
   Persistence.set_file_perms ();
-  StrengthCheck.init ();
+  StrengthCheck.init_async ();
   let open PromptCommands in
   prompt_commands
-    [
-      ("quit", quit_procedure);
-      ( "help",
-        fun () ->
-          print_endline "Must login before accessing other functionalities" );
-      ("login", login_procedure);
-    ]
+    ~synchronous_commands_to_actions:
+      [
+        ("quit", quit_procedure);
+        ( "help",
+          fun () ->
+            print_endline "Must login before accessing other functionalities" );
+        ("login", login_procedure);
+      ]
     ~default:main_incorrect_input_procedure
     ~prompt_message:"Type a command -- quit, help, or login:" ()
 

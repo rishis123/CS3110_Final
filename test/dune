@@ -11,4 +11,6 @@
   unix
   lwt
   cryptokit
-  yojson))
+  yojson)
+ (preprocess
+  (pps lwt_ppx)))

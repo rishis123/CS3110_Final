@@ -1,7 +1,5 @@
-val init : unit -> unit
-(** [init ()] initializes this module and loads commonly used passwords into
-    memory. Must be called before [is_weak]. *)
+val init_async : unit -> unit
+(** [init_async ()] asynchronously begins loading this module. *)
 
-val is_weak : string -> bool
-(** [is_weak pwd] returns true if [pwd] is weak. Fails if [init] has not yet
-    been called. *)
+val is_weak : string -> bool Lwt.t
+(** [is_weak pwd] returns true if [pwd] is weak. If [init_async ()] has not yet completed (or has not been called at all), this first initializes the module. *)

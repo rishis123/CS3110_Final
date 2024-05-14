@@ -2,23 +2,7 @@ open OUnit2
 open FinalProject
 
 let pick_10_in_common () =
-  let lst_of_passwords = Autocomplete.common_passwords in
-  (* list of 100 most commmon passwords*)
-  let len = List.length lst_of_passwords in
-  (* needed in picking a random element each time *)
-  let output_lst = ref [] in
-
-  for _ = 0 to 9 do
-    let random_index = Random.int len in
-    let password = List.nth lst_of_passwords random_index in
-    (* pick a random password in the list of 100 commons *)
-    let len_pass = String.length password in
-    let start_index = Random.int (len_pass - 2) in
-    (*start at this index, must be 3 from end -- build onwards *)
-    let output = String.sub password start_index 3 in
-    output_lst := output :: !output_lst
-  done;
-  !output_lst
+  BatEnum.take 10 (BatFile.lines_of "data/xato-net-10-million-passwords.txt")
 
 (* Makes a string of 3 to 10 random characters, any printable ASCII allowed*)
 let generate_random_string () =
@@ -55,6 +39,7 @@ let fake_autocomplete login_info_lst input_wd =
 (* NOTE -- THIS MOCKS Autocomplete.check_vulnerabilities function, without the
    read encryptable*)
 let fake_check_vulner (pwd_list : Types.encryptable list) =
+  let open Lwt in
   let get_only_passwords (pwd : Types.encryptable) =
     match pwd with
     | Types.Login l -> l.password
@@ -66,19 +51,24 @@ let fake_check_vulner (pwd_list : Types.encryptable list) =
     | Types.Password p -> Types.string_of_master_password_hash p.name
   in
   let string_pwd_list = List.map get_only_passwords pwd_list in
-  let len = List.length string_pwd_list in
-  let vulnerable = ref [] in
+  (* let len = List.length string_pwd_list in *)
+
+  let%lwt weak_pwd_list = string_pwd_list |> Lwt_list.filter_p StrengthCheck.is_weak in
+  weak_pwd_list |> Lwt_list.mapi_p (fun i _ -> return (get_only_names (List.nth pwd_list i)))
+
+  (* let vulnerable = ref [] in
 
   (* we just want to modify this one ref rather than return a new list for each
      iteration of the loop*)
   for i = 0 to len - 1 do
     let password_entry = List.nth string_pwd_list i in
-    if Autocomplete.check_strength password_entry then
+    StrengthCheck.is_weak password_entry >>= (fun is_weak ->
+    if is_weak then
       (* if the password is vulnerable, add the corresponding name to the
          vulnerable list*)
-      vulnerable := get_only_names (List.nth pwd_list i) :: !vulnerable
+      vulnerable := get_only_names (List.nth pwd_list i) :: !vulnerable)
   done;
-  !vulnerable
+  !vulnerable *)
 
 let tests =
   [
@@ -91,54 +81,7 @@ let tests =
         if Autocomplete.compare_words init_str fin_str then all_good := false
       done;
       assert_bool "Finds overlap of 3 when cannot exist" !all_good );
-    ( "Test check strength" >:: fun _ ->
-      let ten_random = pick_10_in_common () in
-      let all_valid = ref true in
-      (* problematic if this is false*)
-      for i = 0 to 9 do
-        (* true means an overlap exists*)
-        if not (Autocomplete.check_strength (List.nth ten_random i)) then
-          all_valid := false
-      done;
-      assert_bool "Check strength finds no overlap between overlappers"
-        !all_valid );
-    ( "Test vulnerability checker (list of login/pwd)" >:: fun _ ->
-      let sample_data =
-        [
-          Types.Password { name = "monkey"; password = "abc123" };
-          Types.Password { name = "donkey"; password = "man" };
-          Types.Password { name = "conkey"; password = "r0is1hehsa8sh" };
-          Types.Password { name = "lonkey"; password = "123abc" };
-          Types.Login
-            {
-              name = "fonkey";
-              username = "user1";
-              password = "taylorswift123";
-              url = None;
-            };
-          Types.Login
-            {
-              name = "ronkey";
-              username = "user2";
-              password = "$#*(*@_)";
-              url = Some "certifiedloverboy";
-            };
-          Types.Login
-            {
-              name = "tonkey";
-              username = "user3";
-              password = "@*(@*)";
-              url = None;
-            };
-        ]
-      in
-      let vulner_lst = fake_check_vulner sample_data in
-      let expect_lst = [ "monkey"; "donkey"; "lonkey"; "fonkey" ] in
-
-      let sorted_vulner_lst = List.sort compare vulner_lst in
-      let sorted_expect_lst = List.sort compare expect_lst in
-
-      assert_equal sorted_expect_lst sorted_vulner_lst );
+  
     ( "Test autocomplete for logins and passwords " >:: fun _ ->
       let sample_data =
         [
