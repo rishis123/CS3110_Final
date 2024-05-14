@@ -14,6 +14,15 @@ module Make (CPP : CommonPasswordsPath) = struct
 
   let init_async () = init_async_return () |> ignore
 
+  let is_initialized () =
+    match !common_passwords_opt with
+    | Some promise -> begin
+        match Lwt.state promise with
+        | Return _ -> true
+        | _ -> false
+      end
+    | None -> false
+
   let is_weak password_str =
     let%lwt common_passwords =
       match !common_passwords_opt with

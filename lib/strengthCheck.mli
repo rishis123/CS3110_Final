@@ -12,4 +12,8 @@ module Make : functor (_ : CommonPasswordsPath) -> sig
   (** [is_weak pwd] returns true if [pwd] is weak. If [init_async ()] has not
       yet completed (or has not been called at all), this first initializes the
       module. *)
+
+  val is_initialized : unit -> bool
+  (** [is_initialized ()] returns true if the module is initialized. If so,
+      is_weak will return very quickly. *)
 end
