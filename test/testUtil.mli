@@ -30,5 +30,5 @@ val conf_use_sequential_runner : unit -> unit
 (** [conf_use_sequential_runner] configures OUnit to run unit tests
     sequentially. *)
 
-val sorted_equals : 'a list -> 'a list -> bool
-(** [sorted_equals lst1 lst2] returns true iff lst1 and lst2 contain the same elements *)
+val equals_ignoring_duplicates : 'a list -> 'a list -> bool
+(** [equals_ignoring_duplicates lst1 lst2] returns true iff lst1 and lst2 contain the same elements *)

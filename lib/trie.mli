@@ -1,7 +1,7 @@
 type t
-(** The type representing tries, supporing the alphabet consisting of
-   alphanumeric characters, space, and the following special characters: *, ?,
-   &, %, ^, !, @, ., _, -, #, ~. Note that this trie cannot contain the empty string. *)
+(** The type representing tries. These tries support any character, but only
+    alphanumeric characters and some special characters (!@#$%^&*()?.-_~ ) are
+    distinguishable. Also, capital and lowercase characters are not distinguishable. *)
 
 val make : unit -> t
 (** [make ()] creates an empty trie. *)

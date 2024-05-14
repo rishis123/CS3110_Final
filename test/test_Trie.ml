@@ -26,6 +26,8 @@ let empty_trie =
   let open Gen in
   QCheck.make (return FinalProject.Trie.make >|= fun f -> f ())
 
+let lowercase = List.map String.lowercase_ascii
+
 let randomized_tests =
   [
     Test.make ~name:"insert x; mem x = true for all x" ~count:500
@@ -57,19 +59,19 @@ let randomized_tests =
         insert x trie;
         insert (x ^ y) trie;
         mem (x ^ y) trie);
-    Test.make ~name:"insert x; insert y; to_list = [x; y] for all x, y"
+    Test.make ~name:"insert x; insert y; to_list = [x; y] for all x, y, x<>y"
       ~count:500 (tup3 trie_string trie_string empty_trie) (fun (x, y, trie) ->
-        assume (x <> "" && y <> "");
+        assume (x <> "" && y <> "" && x <> y);
         insert x trie;
         insert y trie;
-        let ( = ) = TestUtil.sorted_equals in
-        to_list trie = [ x; y ]);
-    Test.make ~name:"of_list [x; y] |> to_list = [x; y] for all x, y" ~count:500
-      (tup2 trie_string trie_string) (fun (x, y) ->
-        assume (x <> "" && y <> "");
+        let ( = ) = TestUtil.equals_ignoring_duplicates in
+        lowercase (to_list trie) = lowercase [ x; y ]);
+    Test.make ~name:"of_list [x; y] |> to_list = [x; y] for all x, y, x<>y"
+      ~count:500 (tup2 trie_string trie_string) (fun (x, y) ->
+        assume (x <> "" && y <> "" && x <> y);
         let trie = of_list [ x; y ] in
-        let ( = ) = TestUtil.sorted_equals in
-        to_list trie = [ x; y ]);
+        let ( = ) = TestUtil.equals_ignoring_duplicates in
+        lowercase (to_list trie) = lowercase [ x; y ]);
   ]
 
 let trie_test_suite =

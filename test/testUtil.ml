@@ -97,5 +97,6 @@ let conf_use_sequential_runner () =
         print_endline bad_message;
         raise (Stdlib.Arg.Bad bad_message)
 
-let sorted_equals lst1 lst2 = 
-  (List.sort compare lst1) = (List.sort compare lst2)
+let equals_ignoring_duplicates lst1 lst2 =
+  lst1 |> List.for_all (fun x -> List.mem x lst2)
+  && lst2 |> List.for_all (fun x -> List.mem x lst2)

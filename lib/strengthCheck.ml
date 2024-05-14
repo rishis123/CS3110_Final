@@ -20,5 +20,10 @@ module Make (CPP : CommonPasswordsPath) = struct
       | Some pass_promise -> pass_promise
       | None -> init_async_return ()
     in
-    Lwt.return (Trie.mem password_str common_passwords)
+    Lwt.return
+      (try Trie.mem password_str common_passwords
+       with Failure _ ->
+        false
+         (* if mess = "Invalid character" then false else raise (Failure mess)) *)
+      )
 end
