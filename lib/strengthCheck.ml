@@ -22,8 +22,6 @@ module Make (CPP : CommonPasswordsPath) = struct
     in
     Lwt.return
       (try Trie.mem password_str common_passwords
-       with Failure _ ->
-        false
-         (* if mess = "Invalid character" then false else raise (Failure mess)) *)
-      )
+       with Failure mess ->
+         if mess = "Invalid character" then false else raise (Failure mess))
 end
