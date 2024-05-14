@@ -1,4 +1,4 @@
-let string_to_salted_hash str = Bcrypt.hash str
+let string_to_salted_hash str = Types.MasterPasswordHash (Bcrypt.hash str)
 
 let string_to_sha3_hash str =
   let hash_function = Cryptokit.Hash.sha3 256 in

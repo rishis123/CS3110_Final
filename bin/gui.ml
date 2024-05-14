@@ -246,8 +246,8 @@ let set_master_pwd_view =
     create_btn "Set master password" (fun () ->
         let newpwd = W.get_text pwd_input in
         (* Salt & Hash -> Convert ot MasterPasswordHash type*)
-        let master_pwd = Encrypt.salt_hash newpwd in
-        Persistence.write_unencryptable master_pwd;
+        MasterPassword.string_to_salted_hash newpwd
+        |> Persistence.write_unencryptable;
         W.set_text pwd_input "";
         Update.push master_pwd_change_complete_signal)
   in

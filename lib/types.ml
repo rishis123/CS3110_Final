@@ -1,4 +1,4 @@
-type master_password_hash = string
+type master_password_hash = Bcrypt.hash
 (** [master_password_hash] is the type of a hash of the master password, used
     for checking validity at startup *)
 
@@ -66,7 +66,7 @@ let string_of_master_password_hash h : string = h
 (** [string_of_unencryptable u] is a string representation of [u] for logging or
     debugging. *)
 let string_of_unencryptable = function
-  | MasterPasswordHash h -> string_of_master_password_hash h
+  | MasterPasswordHash h -> Bcrypt.string_of_hash h
 
 (** [encrypted_form] is the type indicating whether the encrypted data is a
     login or a password. *)

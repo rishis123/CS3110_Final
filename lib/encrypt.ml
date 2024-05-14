@@ -61,5 +61,3 @@ let decrypt (EncryptedString { form; encrypted_data; _ }) =
   match form with
   | EncryptedPassword -> Types.Password (decrypt_password encrypted_data)
   | EncryptedLogin -> Types.Login (decrypt_login encrypted_data)
-
-let salt_hash pwd = Types.MasterPasswordHash pwd

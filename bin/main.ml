@@ -128,15 +128,7 @@ let set_pwd_procedure () =
   print_endline "Type a new password: ";
   let newpwd = get_hidden_input () in
   (* Salt & Hash -> Convert ot MasterPasswordHash type*)
-  let master_pwd = Encrypt.salt_hash newpwd in
-  let string_master_pwd = Types.string_of_unencryptable master_pwd in
-  let hashed_master_pwd =
-    MasterPassword.string_to_salted_hash string_master_pwd
-  in
-  let string_of_hashed_master = Bcrypt.string_of_hash hashed_master_pwd in
-
-  let unencrypt_master_pwd = Encrypt.salt_hash string_of_hashed_master in
-  let () = Persistence.write_unencryptable unencrypt_master_pwd in
+  MasterPassword.string_to_salted_hash newpwd |> Persistence.write_unencryptable;
   print_endline ("The password input was :" ^ newpwd)
 
 module StrengthCheck = StrengthCheck.Make (struct
