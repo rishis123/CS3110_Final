@@ -8,6 +8,7 @@ let parallel_test_suites =
     Test_Memoize.memoize_suite;
     Test_EditDistance.edit_distance_suite;
     Test_Serialization.serialization_suite;
+    Test_StrengthCheck.strength_check_test_suite;
   ]
 
 let sequential_test_suites =

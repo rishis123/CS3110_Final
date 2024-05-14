@@ -51,3 +51,5 @@ let tests =
 
       assert_equal sorted_expect_lst sorted_vulner_lst );
   ]
+
+let strength_check_test_suite = "strength check test suite" >::: tests
