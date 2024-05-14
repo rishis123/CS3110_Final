@@ -30,6 +30,58 @@ let deterministic_tests =
       in
       encryptable_of_string_opt (encryptable_to_string lgn)
       |> assert_equal (Some lgn) );
+    ( "serialization on login with brackets is reversible" >:: fun _ ->
+      let lgn =
+        Login
+          {
+            name = "{name} with {brackets}!";
+            username =
+              "fun chickadee () {
+                dee dee ();
+                chick {
+                  a dee;
+                }
+              }";
+            password =
+              "Surely (and hopefully [that is {I think}]), this will work, even if I have an unmatched brace... {";
+            url = Some "https://}}}}}}}}}.com/brackets";
+          }
+          [@@ocamlformat "break-string-literals=never"]
+      in
+      encryptable_of_string_opt (encryptable_to_string lgn)
+      |> assert_equal (Some lgn) );
+    ( "serialization on login with quotes is reversible" >:: fun _ ->
+      let lgn =
+        Login
+          {
+            name = "My \"name\" is \"login\"";
+            username = "chickadee (\"Poecile atricapillus\")";
+            password =
+              "A wise man once told me, \"Never gonna give you up\\Never gonna let you down\\Never gonna run around and desert you\\Never gonna make you cry\\Never gonna say goodbye\\Never gonna tell a lie and hurt you\"";
+            url =
+              Some
+                "https://didyouknow.thaturlscanhavequotesinthem/?\"it's true!\"";
+          }
+          [@@ocamlformat "break-string-literals=never"]
+      in
+      encryptable_of_string_opt (encryptable_to_string lgn)
+      |> assert_equal (Some lgn) );
+    ( "serialization on login with escape characters is reversible" >:: fun _ ->
+      let lgn =
+        Login
+          {
+            name = "My \n name \n is \n newline guy 🪱";
+            username = "chickadee\tchickadee\{}\\";
+            password =
+              "\\\\\\\\\\\\t\\\\}\\[\{\\\r\\\\\\\\n\\\\]\\\\\\\n";
+            url =
+              Some
+                "https\:\/\/i\ escape\ everything\ even\ when.\itsnotnecessary\t\n\r\n";
+          }
+          [@@ocamlformat "break-string-literals=never"]
+      in
+      encryptable_of_string_opt (encryptable_to_string lgn)
+      |> assert_equal (Some lgn) );
   ]
 
 let randomized_tests =

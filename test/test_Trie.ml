@@ -72,6 +72,20 @@ let randomized_tests =
         let trie = of_list [ x; y ] in
         let ( = ) = TestUtil.equals_ignoring_duplicates in
         lowercase (to_list trie) = lowercase [ x; y ]);
+    Test.make ~name:"insert x; mem (lower x) = true for all x, y, x<>y"
+      ~count:500 (tup2 empty_trie trie_string) (fun (trie, x) ->
+        assume (x <> "");
+        let lower_x = String.lowercase_ascii x in
+        trie |> insert x;
+        trie |> mem (lower_x)
+      );
+    Test.make ~name:"insert x; mem (upper x) = true for all x, y, x<>y"
+      ~count:500 (tup2 empty_trie trie_string) (fun (trie, x) ->
+        assume (x <> "");
+        let upper_x = String.uppercase_ascii x in
+        trie |> insert x;
+        trie |> mem (upper_x)
+      );
   ]
 
 let trie_test_suite =
