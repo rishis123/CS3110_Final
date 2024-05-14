@@ -1,11 +1,5 @@
 let string_to_salted_hash str = Types.MasterPasswordHash (Bcrypt.hash str)
 
-let string_to_sha3_hash str =
-  let hash_function = Cryptokit.Hash.sha3 256 in
-  (* 256-bit SHA3 hash *)
-  hash_function#add_string str;
-  hash_function#result
-
 let check_master_pwd password =
   (* let password1 = string_to_salted_hash password in let string_of_pwd1 =
      Bcrypt.string_of_hash password1 in *)
