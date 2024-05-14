@@ -42,30 +42,6 @@ let rec _insert ?(str_start_idx = 0) str trie =
 
 let insert str trie = _insert str trie
 
-let to_string trie =
-  trie
-  |> Array.to_list
-  |> List.filter (function
-       | NonTerminal _ -> true
-       | Empty -> false)
-  |> List.map (fun node ->
-         Tree.to_string
-           ~get_name:(function
-             | NonTerminal nt ->
-                 BatString.of_char nt.value ^ if nt.is_terminal then "!" else ""
-             | Empty -> ".")
-           ~get_children:(function
-             | NonTerminal nt ->
-                 nt.children
-                 |> Array.to_list
-                 |> List.filter (function
-                      | NonTerminal _ -> true
-                      | Empty -> false)
-             | Empty -> [])
-           node)
-  |> List.filter (fun l -> String.length l > 0)
-  |> String.concat ""
-
 let of_list lst =
   let trie = make () in
   List.iter (fun str -> insert str trie) lst;
