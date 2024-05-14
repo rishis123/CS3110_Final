@@ -9,7 +9,7 @@ Install the required dependencies using the following commands in a terminal:
 ```sh
 $ opam update
 $ opam upgrade
-$ opam install batteries ppx_inline_test core csv cryptokit yojson bogue safepass
+$ opam install batteries ppx_inline_test core csv cryptokit yojson bogue safepass lwt ounit2 ounit-lwt qcheck
 ```
 
 Note: If using WSL, WSL 2 on Windows 10 or higher is required. WSL may need to be updated. See Microsoft's guide for more details: https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps
