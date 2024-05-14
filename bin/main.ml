@@ -35,7 +35,9 @@ let help_procedure () = print_endline help_msg
 
 let list_procedure () =
   let pwd_list = Persistence.read_all_encryptable () in
-  List.iter (fun x -> print_endline (Types.string_of_encryptable x)) pwd_list
+  match List.length pwd_list with
+  | 0 -> print_endline "No saved logins."
+  | _ -> List.iter (fun x -> print_endline (Types.string_of_encryptable x)) pwd_list
 
 let findsing_procedure () =
   print_endline "Enter what you think the name of your password or login is";
