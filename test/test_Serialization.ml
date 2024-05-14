@@ -71,12 +71,11 @@ let deterministic_tests =
         Login
           {
             name = "My \n name \n is \n newline guy 🪱";
-            username = "chickadee\tchickadee\{}\\";
-            password =
-              "\\\\\\\\\\\\t\\\\}\\[\{\\\r\\\\\\\\n\\\\]\\\\\\\n";
+            username = "chickadee\t\\tchickadee\\{}\\";
+            password = "\\\\\\\\\\\\t\\\\}\\[\\{\\\r\\\\\\\\n\\\\]\\\\\\\n";
             url =
               Some
-                "https\:\/\/i\ escape\ everything\ even\ when.\itsnotnecessary\t\n\r\n";
+                "https\\:\\/\\/i\\ escape\ everything\ even\ when.\\itsnotnecessary\t\n\r\n";
           }
           [@@ocamlformat "break-string-literals=never"]
       in
