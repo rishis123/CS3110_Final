@@ -132,7 +132,7 @@ let set_pwd_procedure () =
   print_endline ("The password input was :" ^ newpwd)
 
 module StrengthCheck = StrengthCheck.Make (struct
-  let common_passwords_path = "data/xato-net-10-million-passwords.txt"
+  let common_passwords_path = "data/10-million-combos-2.txt"
 end)
 
 let check_strength_procedure () =
