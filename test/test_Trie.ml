@@ -77,16 +77,36 @@ let randomized_tests =
         assume (x <> "");
         let lower_x = String.lowercase_ascii x in
         trie |> insert x;
-        trie |> mem (lower_x)
-      );
+        trie |> mem lower_x);
     Test.make ~name:"insert x; mem (upper x) = true for all x, y, x<>y"
       ~count:500 (tup2 empty_trie trie_string) (fun (trie, x) ->
         assume (x <> "");
         let upper_x = String.uppercase_ascii x in
         trie |> insert x;
-        trie |> mem (upper_x)
-      );
+        trie |> mem upper_x);
+    Test.make ~name:"make () |> mem x = false for all x" ~count:500
+      (tup2 empty_trie trie_string) (fun (trie, x) -> not (mem x trie));
+    Test.make ~name:"insert x; mem y = false for all x, y, lower x <> lower y"
+      ~count:500 (tup3 empty_trie trie_string trie_string) (fun (trie, x, y) ->
+        assume
+          (x <> ""
+          && y <> ""
+          && String.lowercase_ascii x <> String.lowercase_ascii y);
+        trie |> insert x;
+        not (mem y trie));
+  ]
+
+let deterministic_tests =
+  [
+    ( "strange characters considered equal" >:: fun _ ->
+      let strange_characters =
+        [ "¢"; "Â"; "£"; "â"; "§"; "¶"; "ª"; "º"; "´"; "®"; "¨" ]
+      in
+      let trie = make () in
+      List.nth strange_characters 0 |> Fun.flip insert trie;
+      assert (strange_characters |> List.for_all (Fun.flip mem trie)) );
   ]
 
 let trie_test_suite =
-  "trie test suite" >::: QCheck_runner.to_ounit2_test_list randomized_tests
+  "trie test suite"
+  >::: deterministic_tests @ QCheck_runner.to_ounit2_test_list randomized_tests

@@ -132,12 +132,16 @@ let set_pwd_procedure () =
   print_endline ("The password input was :" ^ newpwd)
 
 module StrengthCheck = StrengthCheck.Make (struct
-  let common_passwords_path = "data/xato-net-10-million-passwords.txt"
+  let common_passwords_path = "data/10-million-combos-2.txt"
 end)
 
 let check_strength_procedure () =
   print_endline "Enter your existing password.";
   let existing = get_hidden_input () in
+  if not (StrengthCheck.is_initialized ()) then begin
+    print_endline "Loading weak passwords list...";
+    print_endline "Please wait a few moments."
+  end;
   if%lwt StrengthCheck.is_weak existing then
     Lwt.return
       (print_endline
@@ -148,6 +152,10 @@ let check_strength_procedure () =
 let health_check_procedure () =
   let open Batteries in
   let open Lwt in
+  if not (StrengthCheck.is_initialized ()) then begin
+    print_endline "Loading weak passwords list...";
+    print_endline "Please wait a few moments."
+  end;
   let%lwt weak_encryptables =
     Persistence.read_all_encryptable ()
     |> Lwt_list.filter_p (StrengthCheck.is_weak % Types.password_of_encryptable)
@@ -267,8 +275,6 @@ let main_incorrect_input_procedure input =
   else print_endline "That is not a valid command."
 
 let main_loop () =
-  print_endline "Loading...";
-  print_endline "Please wait a few moments.";
   Persistence.set_file_perms ();
   StrengthCheck.init_async ();
   let open PromptCommands in
