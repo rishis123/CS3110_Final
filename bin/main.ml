@@ -7,7 +7,8 @@ let quit_procedure () =
 
 let help_msg =
   "Here are the available commands:\n\n\
-   add: Add a new password.\n\
+   add: Add a new login or password.\n\
+   delete: Delete a login or password.\n\
    list: List saved passwords.\n\
    findsing: Autocompletes given name and lists relevant password or login \
    information \n\
@@ -111,6 +112,12 @@ let add_login_procedure () =
   let encryptable = Types.Login { name; username; password; url } in
   Persistence.write_encryptable encryptable
 
+let delete_procedure () = 
+  print_endline "What is the name of the login or password you would like to delete?";
+  let name = read_line () in
+  Persistence.delete_encryptable_by_name name;
+  Printf.printf "Successfully deleted the login %s" name
+
 let set_pwd_procedure () =
   print_endline "Type a new password: ";
   let newpwd = get_hidden_input () in
@@ -168,6 +175,7 @@ let logged_in_actions =
     ("add", add_procedure);
     ("add pwd", add_password_procedure);
     ("add login", add_login_procedure);
+    ("delete", delete_procedure);
     ("setpwd", set_pwd_procedure);
     ("check_strength", check_strength_procedure);
     ("health_check", health_check_procedure);
