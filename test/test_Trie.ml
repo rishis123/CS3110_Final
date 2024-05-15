@@ -2,25 +2,7 @@ open OUnit2
 open QCheck
 open FinalProject.Trie
 
-let trie_char_code_gen =
-  let alphanum =
-    let open Gen in
-    [ int_range 65 90; int_range 97 122; int_range 48 57 ]
-  in
-  let special_chars =
-    "!@#$%^&*()?.-_~ "
-    |> String.to_seq
-    |> Seq.map int_of_char
-    |> Seq.map Gen.return
-    |> List.of_seq
-  in
-  alphanum @ special_chars |> Gen.oneof
-
-let trie_char_gen =
-  let open Gen in
-  trie_char_code_gen >|= char_of_int
-
-let trie_string = string_gen trie_char_gen
+let trie_string = string
 
 let empty_trie =
   let open Gen in
@@ -98,13 +80,18 @@ let randomized_tests =
 
 let deterministic_tests =
   [
-    ( "strange characters considered equal" >:: fun _ ->
+    ( "strange characters distinguishable" >:: fun _ ->
       let strange_characters =
         [ "¢"; "Â"; "£"; "â"; "§"; "¶"; "ª"; "º"; "´"; "®"; "¨" ]
       in
-      let trie = make () in
-      List.nth strange_characters 0 |> Fun.flip insert trie;
-      assert (strange_characters |> List.for_all (Fun.flip mem trie)) );
+      strange_characters
+      |> List.iter (fun strange ->
+             let trie = make () in
+             insert strange trie;
+             assert (mem strange trie);
+             strange_characters
+             |> List.iter (fun strange' ->
+                    assert (strange' = strange || not (mem strange' trie)))) );
   ]
 
 let trie_test_suite =
