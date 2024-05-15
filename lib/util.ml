@@ -39,10 +39,3 @@ let sorted_by_below_threshold sel thresh seq =
   arr_with_select_above_threshold
   |> Array.to_seq
   |> Seq.map (fun (elem, _) -> elem)
-
-let rec substring s1 s2 =
-  if String.length s1 < String.length s2 then false
-  else
-    let s2_len = String.length s2 in
-    if String.sub s1 0 s2_len = s2 then true
-    else substring (String.sub s1 1 (String.length s1 - 1)) s2

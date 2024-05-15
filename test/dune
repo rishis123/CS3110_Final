@@ -12,6 +12,7 @@
   unix
   lwt
   cryptokit
-  yojson)
+  yojson
+  batteries)
  (preprocess
   (pps lwt_ppx)))

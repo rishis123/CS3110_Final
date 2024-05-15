@@ -1,7 +1,6 @@
 open OUnit2
 open FinalProject.Types
 open FinalProject.Encrypt
-open FinalProject.Util
 open TestUtil
 
 let key1 = "password123"
@@ -47,8 +46,11 @@ let randomized_tests =
         match encrypt (Password pwd) with
         | EncryptedString es ->
             let ciphertext = String.uppercase_ascii es.encrypted_data in
-            (not (substring ciphertext (String.uppercase_ascii pwd.name)))
-            && not (substring ciphertext (String.uppercase_ascii pwd.password)));
+            (not
+               (BatString.exists ciphertext (String.uppercase_ascii pwd.name)))
+            && not
+                 (BatString.exists ciphertext
+                    (String.uppercase_ascii pwd.password)));
     Test.make
       ~name:
         "The encrypted data in Enc(key, login)) does not contain of the fields \
@@ -58,15 +60,18 @@ let randomized_tests =
         match encrypt (Login lgn) with
         | EncryptedString es -> (
             let ciphertext = String.uppercase_ascii es.encrypted_data in
-            (not (substring ciphertext (String.uppercase_ascii lgn.name)))
+            (not
+               (BatString.exists ciphertext (String.uppercase_ascii lgn.name)))
             && (not
-                  (substring ciphertext (String.uppercase_ascii lgn.username)))
+                  (BatString.exists ciphertext
+                     (String.uppercase_ascii lgn.username)))
             && (not
-                  (substring ciphertext (String.uppercase_ascii lgn.password)))
+                  (BatString.exists ciphertext
+                     (String.uppercase_ascii lgn.password)))
             &&
             match lgn.url with
             | Some url ->
-                not (substring ciphertext (String.uppercase_ascii url))
+                not (BatString.exists ciphertext (String.uppercase_ascii url))
             | None -> true));
   ]
 
