@@ -1,20 +1,3 @@
-module TimeoutHandler : sig
-  type 'a t
-  (** Represents a timeout duration and the function to run on timeout *)
-
-  val make : float -> (unit -> 'a) -> 'a t
-  (** [make timeout_s on_timeout] creates a [TimeoutHandler.t] that represents a
-      timeout of [timeout_s] seconds, running [on_timeout] after the timeout *)
-
-  val timeout_s : 'a t -> float
-  (** [timeout_s handler] returns the timeout (in seconds) represented by
-      [handler] *)
-
-  val on_timeout : 'a t -> unit -> 'a
-  (** [on_timeout handler] returns the function that should be called when
-      [handler]'s timeout expires *)
-end
-
 val prompt_commands :
   ?synchronous_commands_to_actions:(string * (unit -> unit)) list ->
   ?async_commands_to_actions:(string * (unit -> unit Lwt.t)) list ->
