@@ -26,6 +26,7 @@ module Make (Dirs : Directories) = struct
   let read_master_password_hash () =
     let lines = BatList.of_enum (BatFile.lines_of masterpwd_file_path) in
     let hash = BatList.hd lines in
+    (* note: this returns head.*)
     Bcrypt.hash_of_string hash
 
   let write_unencryptable master_value =
