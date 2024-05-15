@@ -1,3 +1,6 @@
+(* @author Rohen Giralt (rmg296), Sophia Song, Rishi Shah (ss3579), Lakshmi
+   Meghana Kesanapalli (lk496), Zhijia Ye (zy424) *)
+
 open FinalProject
 module Persistence = Persistence.Default
 
