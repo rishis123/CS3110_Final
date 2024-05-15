@@ -5,6 +5,7 @@ type node = {
 }
 
 type t = node OrderedMultiset.t
+(** TODO: The type of a trie that stores strings. AF: ?? RI: ?? *)
 
 let child_with_char chr trie =
   trie |> OrderedMultiset.find_opt (fun node -> node.value = chr)

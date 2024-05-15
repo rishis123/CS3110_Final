@@ -1,3 +1,6 @@
+(* @author Rohen Giralt (rmg296), Sophia Song, Rishi Shah (ss3579), Lakshmi
+   Meghana Kesanapalli (lk496), Zhijia Ye (zy424) *)
+
 open Bogue
 module W = Widget
 module L = Layout
@@ -106,9 +109,6 @@ let import_view =
       L.resident ~w:window_width cancel_btn;
     ]
 
-(** [gen_pwd_view] is the view shown when the user generates a new password *)
-let gen_pwd_view = ref (L.empty ~w:window_width ~h:600 ())
-
 (** [!special_char_on] is whether to include special characters in the generated
     password. *)
 let special_char_on = ref true
@@ -116,14 +116,15 @@ let special_char_on = ref true
 (** [pwd_length] is the length of the password to generate. *)
 let pwd_length = ref 12
 
-(** [update_gen_pwd_view ()] updates the [gen_pwd_view] with a newly generated
-    password when transitioning from home. *)
-let update_gen_pwd_view () =
-  let get_pwd () =
-    if !special_char_on then
-      GenPassword.generate_password_with_special !pwd_length
-    else GenPassword.generate_password_without_special !pwd_length
-  in
+(** [get_pwd ()] generates a password with [!pwd_length] and includes special
+    characters if [!special_char_on] is true. *)
+let get_pwd () =
+  if !special_char_on then
+    GenPassword.generate_password_with_special !pwd_length
+  else GenPassword.generate_password_without_special !pwd_length
+
+(** [gen_pwd_view] is the view shown when the user generates a new password *)
+let gen_pwd_view =
   let length_label = W.label ~size:label_text_size "Password length: " in
   let length_input = create_text_input "      " in
   let pwd_label = W.label ~size:label_text_size (get_pwd ()) in
@@ -133,10 +134,8 @@ let update_gen_pwd_view () =
       ~label_off:(Label.create ~size:label_text_size "Special character: Off")
       ~action:(fun x ->
         if x then special_char_on := true else special_char_on := false)
-      ""
+      ~state:!special_char_on ""
   in
-  let () = if !special_char_on then W.set_state special_char_btn true else () in
-  let () = W.set_text length_input (string_of_int !pwd_length) in
   let gen_again_btn =
     create_btn "Generate again" (fun () ->
         let new_len =
@@ -148,19 +147,18 @@ let update_gen_pwd_view () =
         pwd_length := new_len;
         W.set_text pwd_label (get_pwd ()))
   in
-  gen_pwd_view :=
-    L.tower
-      [
-        L.resident ~w:window_width pwd_label;
-        L.resident ~w:window_width special_char_btn;
-        L.flat
-          [
-            L.resident ~w:(window_width / 2) length_label;
-            L.resident ~w:(window_width / 2) length_input;
-          ];
-        L.resident ~w:window_width gen_again_btn;
-        L.resident ~w:window_width back_btn;
-      ]
+  L.tower
+    [
+      L.resident ~w:window_width pwd_label;
+      L.resident ~w:window_width special_char_btn;
+      L.flat
+        [
+          L.resident ~w:(window_width / 2) length_label;
+          L.resident ~w:(window_width / 2) length_input;
+        ];
+      L.resident ~w:window_width gen_again_btn;
+      L.resident ~w:window_width back_btn;
+    ]
 
 (** [add_view] is the view shown when the user adds a new password. *)
 let add_view =
@@ -179,46 +177,35 @@ let add_view =
   let pwd_input = create_text_input "Enter password" in
   let username_input = create_text_input "Enter username" in
   let url_input = create_text_input "Enter url" in
+  let not_empty s = String.length s > 0 in
+  let is_empty s = s = String.empty in
+  let write_and_update encryptable =
+    Persistence.write_encryptable encryptable;
+    W.set_text name_input "";
+    W.set_text username_input "";
+    W.set_text pwd_input "";
+    W.set_text url_input "";
+    Update.push add_complete_signal
+  in
   let add_btn =
     create_btn "Add password" (fun () ->
         let name = W.get_text name_input in
         let username = W.get_text username_input in
         let pwd = W.get_text pwd_input in
         let url = W.get_text url_input in
-        let not_empty s = String.length s > 0 in
-        let erase_all_input () =
-          W.set_text name_input "";
-          W.set_text username_input "";
-          W.set_text pwd_input "";
-          W.set_text url_input ""
-        in
         if
           not_empty name && not_empty username && not_empty pwd && not_empty url
-        then (
-          Persistence.write_encryptable
-            (Types.Login { name; username; password = pwd; url = Some url });
-          erase_all_input ();
-          Update.push add_complete_signal)
+        then
+          write_and_update
+            (Types.Login { name; username; password = pwd; url = Some url })
         else if
-          not_empty name
-          && not_empty username
-          && not_empty pwd
-          && not (not_empty url)
-        then (
-          Persistence.write_encryptable
-            (Types.Login { name; username; password = pwd; url = None });
-          erase_all_input ();
-          Update.push add_complete_signal)
+          not_empty name && not_empty username && not_empty pwd && is_empty url
+        then
+          write_and_update
+            (Types.Login { name; username; password = pwd; url = None })
         else if
-          not_empty name
-          && not_empty pwd
-          && (not (not_empty username))
-          && not (not_empty url)
-        then (
-          let encryptable = Types.Password { name; password = pwd } in
-          Persistence.write_encryptable encryptable;
-          erase_all_input ();
-          Update.push add_complete_signal)
+          not_empty name && not_empty pwd && is_empty username && is_empty url
+        then write_and_update (Types.Password { name; password = pwd })
         else ignore ())
   in
   let cancel_btn =
@@ -270,52 +257,44 @@ let set_master_pwd_view =
 (** [!list_view] is the view shown when the user lists all passwords. *)
 let list_view = ref (L.empty ~w:window_width ~h:600 ())
 
+(** [create_login_label_resident name data] creates a resident layout for a
+    field of a login's data, with [name] as the name of the field and [data] as
+    the login's information. *)
+let create_login_label_resident name data =
+  let h = 50 in
+  L.resident ~w:window_width
+    (W.rich_text ~size:label_text_size ~h
+       Text_display.(page [ bold (para name); para data ]))
+
+(** [create_login_label data] creates a resident layout with all of a login's
+    data, to be displayed in [list_view]. *)
+let create_login_label data =
+  match data with
+  | Types.Password p ->
+      L.tower
+        [
+          create_login_label_resident "Name: " p.name;
+          create_login_label_resident "Password: " p.password;
+        ]
+  | Types.Login l -> (
+      let fields =
+        [
+          create_login_label_resident "Name: " l.name;
+          create_login_label_resident "Username: " l.username;
+          create_login_label_resident "Password: " l.password;
+        ]
+      in
+      match l.url with
+      | None -> L.tower fields
+      | Some url ->
+          L.tower (fields @ [ create_login_label_resident "Url: " url ]))
+
 (** [update_list_view ()] updates [list_view] so that changes made to the logins
     are displayed. In other words, list view updates if changes are made to the
     data. *)
 let update_list_view () =
   let new_list_view =
     let pwd_list = Persistence.read_all_encryptable () in
-    let h = 50 in
-    let create_login_label = function
-      | Types.Password p ->
-          L.tower
-            [
-              L.resident ~w:window_width
-                (W.rich_text ~size:label_text_size ~h
-                   Text_display.(page [ bold (para "Name: "); para p.name ]));
-              L.resident ~w:window_width
-                (W.rich_text ~size:label_text_size ~h
-                   Text_display.(
-                     page [ bold (para "Password: "); para p.password ]));
-            ]
-      | Types.Login l -> (
-          let fields =
-            [
-              L.resident ~w:window_width
-                (W.rich_text ~size:label_text_size ~h
-                   Text_display.(page [ bold (para "Name: "); para l.name ]));
-              L.resident ~w:window_width
-                (W.rich_text ~size:label_text_size ~h
-                   Text_display.(
-                     page [ bold (para "Username: "); para l.username ]));
-              L.resident ~w:window_width
-                (W.rich_text ~size:label_text_size ~h
-                   Text_display.(
-                     page [ bold (para "Password: "); para l.password ]));
-            ]
-          in
-          match l.url with
-          | None -> L.tower fields
-          | Some url ->
-              L.tower
-                (fields
-                @ [
-                    L.resident ~w:window_width
-                      (W.rich_text ~size:label_text_size ~h
-                         Text_display.(page [ bold (para "Url: "); para url ]));
-                  ]))
-    in
     let label_list = List.map create_login_label pwd_list in
     let scrollpane = L.make_clip ~scrollbar:true ~h:500 (L.tower label_list) in
     L.tower [ scrollpane; L.resident ~w:window_width back_btn ]
@@ -431,9 +410,7 @@ let connections =
   let list_view_connection =
     create_mutation_connection list_signal list_view update_list_view
   in
-  let gen_pwd_view_connection =
-    create_mutation_connection gen_pwd_signal gen_pwd_view update_gen_pwd_view
-  in
+  let gen_pwd_view_connection = create_connection gen_pwd_signal gen_pwd_view in
   [
     create_connection login_signal home_view;
     create_connection add_signal add_view;

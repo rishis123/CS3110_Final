@@ -1,3 +1,6 @@
+(* @author Rohen Giralt (rmg296), Sophia Song, Rishi Shah (ss3579), Lakshmi
+   Meghana Kesanapalli (lk496), Zhijia Ye (zy424) *)
+
 open FinalProject
 module Persistence = Persistence.Default
 
@@ -135,13 +138,16 @@ module StrengthCheck = StrengthCheck.Make (struct
   let common_passwords_path = "data/10-million-combos-2.txt"
 end)
 
-let check_strength_procedure () =
-  print_endline "Enter your existing password.";
-  let existing = get_hidden_input () in
+let maybe_print_loading_strengthcheck_message () =
   if not (StrengthCheck.is_initialized ()) then begin
     print_endline "Loading weak passwords list...";
     print_endline "Please wait a few moments."
-  end;
+  end
+
+let check_strength_procedure () =
+  print_endline "Enter your existing password.";
+  let existing = get_hidden_input () in
+  maybe_print_loading_strengthcheck_message ();
   if%lwt StrengthCheck.is_weak existing then
     Lwt.return
       (print_endline
@@ -152,10 +158,7 @@ let check_strength_procedure () =
 let health_check_procedure () =
   let open Batteries in
   let open Lwt in
-  if not (StrengthCheck.is_initialized ()) then begin
-    print_endline "Loading weak passwords list...";
-    print_endline "Please wait a few moments."
-  end;
+  maybe_print_loading_strengthcheck_message ();
   let%lwt weak_encryptables =
     Persistence.read_all_encryptable ()
     |> Lwt_list.filter_p (StrengthCheck.is_weak % Types.password_of_encryptable)
@@ -165,16 +168,12 @@ let health_check_procedure () =
       (Types.name_of_encryptable enc)
       (Types.password_of_encryptable enc)
   in
-  match List.length weak_encryptables with
-  | 0 ->
-      print_endline "No weak logins or passwords found!";
-      return_unit
-  | _ -> begin
-      List.iter output_printer weak_encryptables;
-      print_endline
-        "Try randomly generating a password with the gen_password command!";
-      return_unit
-    end
+  if List.length weak_encryptables = 0 then
+    print_endline "No weak logins or passwords found!"
+  else List.iter output_printer weak_encryptables;
+  print_endline
+    "Try randomly generating a password with the gen_password command!";
+  return_unit
 
 let export_procedure () =
   print_endline "Type the path to which you would like to export: ";
