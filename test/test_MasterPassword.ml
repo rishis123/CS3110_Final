@@ -1,6 +1,5 @@
 open OUnit2
 open FinalProject.MasterPassword
-open FinalProject.Util
 open FinalProject.Types
 open TestUtil
 
@@ -15,7 +14,9 @@ let randomized_tests =
         "salted hash does not contain original string as substring (for \
          reasonably long strings)" ~count:200 (string_with_range 10 10000)
       (fun str ->
-        substring (str |> string_to_salted_hash |> unencryptable_to_string) str
+        BatString.exists
+          (str |> string_to_salted_hash |> unencryptable_to_string)
+          str
         |> not);
     Test.make
       ~name:
