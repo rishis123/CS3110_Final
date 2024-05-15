@@ -1,22 +1,23 @@
-let prompt_command_no_timeout
-    (commands_to_actions : (string * (unit -> unit Lwt.t)) list)
+let action_matching_input_opt commands_to_actions input =
+  commands_to_actions
+  |> List.find_opt (fun (command, _) ->
+         FinalProject.Util.fuzzy_equal command input)
+  |> Option.map (fun (_, action) -> action)
+
+let action_or_default ~default action_opt =
+  match action_opt with
+  | Some a -> a
+  | None -> fun () -> Lwt.return (default input)
+
+let prompt_command_no_timeout commands_to_actions
     ?(default = fun _ -> print_endline "I don't recognize that command.")
     ~prompt_message () =
   let open Lwt in
   print_endline prompt_message;
   Printf.printf "> %!";
   let input = read_line () in
-  let action_opt =
-    commands_to_actions
-    |> List.find_opt (fun (command, _) ->
-           FinalProject.Util.fuzzy_equal command input)
-    |> Option.map (fun (_, action) -> action)
-  in
-  let action =
-    match action_opt with
-    | Some a -> a
-    | None -> fun () -> return (default input)
-  in
+  let action_opt = action_matching_input_opt commands_to_actions input in
+  let action = action_or_default ~default action_opt in
   let%lwt () = action () in
   print_endline "";
   return_unit
@@ -28,36 +29,28 @@ let rec prompt_commands_no_timeout commands_to_actions ?default ~prompt_message
   in
   prompt_commands_no_timeout commands_to_actions ?default ~prompt_message ()
 
-module TimeoutHandler = struct
-  type 'a t = {
-    timeout_s : float;
-    on_timeout : unit -> 'a;
-  }
-
-  let make timeout_s on_timeout = { timeout_s; on_timeout }
-  let timeout_s th = th.timeout_s
-  let on_timeout th = th.on_timeout
-end
-
 open TimeoutHandler
+
+let timeout_promise timeout_handler =
+  let%lwt () = Lwt_unix.sleep (timeout_s timeout_handler) in
+  Lwt.return_false
+
+let prompt_and_run_action commands_to_actions ?default ~prompt_message () =
+  let%lwt action_promise =
+    Lwt_preemptive.detach
+      (prompt_command_no_timeout commands_to_actions ?default ~prompt_message)
+      ()
+  in
+  let%lwt () = action_promise in
+  Lwt.return_true
 
 let rec prompt_commands_with_timeout commands_to_actions ?default
     ~timeout_handler ~prompt_message () =
   let open Lwt in
   let prompt_promise =
-    let%lwt action_promise =
-      Lwt_preemptive.detach
-        (prompt_command_no_timeout commands_to_actions ?default ~prompt_message)
-        ()
-    in
-    let%lwt () = action_promise in
-    return_true
+    prompt_and_run_action commands_to_actions ?default ~prompt_message ()
   in
-  let timeout_promise =
-    let%lwt () = Lwt_unix.sleep (timeout_s timeout_handler) in
-    return_false
-  in
-  let%lwt success = pick [ prompt_promise; timeout_promise ] in
+  let%lwt success = pick [ prompt_promise; timeout_promise timeout_handler ] in
   if success then
     prompt_commands_with_timeout commands_to_actions ?default ~timeout_handler
       ~prompt_message ()
