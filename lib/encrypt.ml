@@ -14,9 +14,9 @@ let form_of_encryptable = function
   | Types.Login _ -> EncryptedLogin
   | Types.Password _ -> EncryptedPassword
 
-(** [string_to_sha3_hash str] is the 256-bit SHA3 hash of [str]. *)
-let string_to_sha3_hash str =
-  let hash_function = sha3 256 in
+(** [string_to_sha2_hash str] is the 256-bit SHA2 hash of [str]. *)
+let string_to_sha2_hash str =
+  let hash_function = sha256 () in
   (* 256-bit SHA3 hash *)
   hash_function#add_string str;
   hash_function#result
@@ -29,7 +29,7 @@ let transform direction target =
   match !masterkey with
   | None -> failwith "Masterkey not yet set!"
   | Some masterkey ->
-      let key = string_to_sha3_hash masterkey in
+      let key = string_to_sha2_hash masterkey in
       (* key derivation of [masterkey] *)
       let transformer = aes ~pad:Padding.length key direction in
       transformer#put_string target;
