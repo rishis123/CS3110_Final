@@ -55,6 +55,20 @@ let tests =
         (* only turns false if contains alphanumerics*)
       done;
       assert_bool "Contain non-alphanumerics" !valid );
+    ( "Test correct length non-special characters" >:: fun _ ->
+      let valid = ref true in
+      let len = Random.int 50 in
+      let password_new = generate_password_without_special len in
+      if String.length password_new <> len then valid := false;
+      (* if different passwords*)
+      assert_bool "Wrong length for non-special" !valid );
+    ( "Test correct length special characters" >:: fun _ ->
+      let valid = ref true in
+      let len = Random.int 50 in
+      let password_new = generate_password_with_special len in
+      if String.length password_new <> len then valid := false;
+      (* if different passwords*)
+      assert_bool "Wrong length for special" !valid );
     ( "Test none of 5 spec-spec passwords have non-permitted chars (not \
        alpha-numeric or #, $, &)"
     >:: fun _ ->

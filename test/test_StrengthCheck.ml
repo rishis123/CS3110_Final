@@ -28,7 +28,8 @@ let filter_weak (pwd_list : Types.encryptable list) =
     string_pwd_list |> Lwt_list.filter_p StrengthCheck.is_weak
   in
   weak_pwd_list
-  |> Lwt_list.mapi_p (fun i _ -> return (Types.name_of_encryptable (List.nth pwd_list i)))
+  |> Lwt_list.mapi_p (fun i _ ->
+         return (Types.name_of_encryptable (List.nth pwd_list i)))
 
 let tests =
   [
@@ -40,7 +41,7 @@ let tests =
             in
             assert_bool "Check strength finds no overlap between overlappers"
               all_valid;
-            Lwt.return_unit)
+            Lwt.return_unit);
   ]
 
 let strength_check_test_suite = "strength check test suite" >::: tests

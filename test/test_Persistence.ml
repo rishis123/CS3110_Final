@@ -49,7 +49,7 @@ let write_encryptable encryptable =
 let tests =
   [
     ( "Test write encryptable (password) and read it" >:: fun _ ->
-      set_file_perms ();
+      (* set_file_perms (); *)
       let try_pass = Types.Password { name = "monkey"; password = "abc123" } in
       let () = write_encryptable try_pass in
       let mem_list = read_all_encryptable () in

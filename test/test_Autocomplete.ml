@@ -1,8 +1,6 @@
 open OUnit2
 open FinalProject
 
-
-
 (* Makes a string of 3 to 10 random characters, any printable ASCII allowed*)
 let generate_random_string () =
   let random_char () = char_of_int (Random.int 94 + 32) in
@@ -46,7 +44,6 @@ let tests =
         if Autocomplete.compare_words init_str fin_str then all_good := false
       done;
       assert_bool "Finds overlap of 3 when cannot exist" !all_good );
-  
     ( "Test autocomplete for logins and passwords " >:: fun _ ->
       let sample_data =
         [
