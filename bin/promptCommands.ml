@@ -4,7 +4,7 @@ let action_matching_input_opt commands_to_actions input =
          FinalProject.Util.fuzzy_equal command input)
   |> Option.map (fun (_, action) -> action)
 
-let action_or_default ~default action_opt =
+let action_or_default ~(default : string -> unit) action_opt input =
   match action_opt with
   | Some a -> a
   | None -> fun () -> Lwt.return (default input)
@@ -17,7 +17,7 @@ let prompt_command_no_timeout commands_to_actions
   Printf.printf "> %!";
   let input = read_line () in
   let action_opt = action_matching_input_opt commands_to_actions input in
-  let action = action_or_default ~default action_opt in
+  let action = action_or_default ~default action_opt input in
   let%lwt () = action () in
   print_endline "";
   return_unit
