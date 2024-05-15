@@ -9,6 +9,8 @@ let parallel_test_suites =
     Test_EditDistance.edit_distance_suite;
     Test_Serialization.serialization_suite;
     Test_StrengthCheck.strength_check_test_suite;
+    Test_Trie.trie_test_suite;
+    Test_MasterPassword.master_password_test_suite;
   ]
 
 let sequential_test_suites =

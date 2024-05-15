@@ -10,7 +10,7 @@ let json_to_string_option : Yojson.Basic.t -> string option = function
   | _ -> failwith "Invalid JSON type for conversion to string option"
 
 let unencryptable_to_json (MasterPasswordHash hash) : Yojson.Basic.t =
-  `Assoc [ ("master_password_hash", `String hash) ]
+  `Assoc [ ("master_password_hash", `String (Bcrypt.string_of_hash hash)) ]
 
 let unencryptable_to_string h =
   h |> unencryptable_to_json |> Yojson.Basic.to_string
@@ -19,7 +19,7 @@ let unencryptable_of_string_opt str =
   match Yojson.Basic.from_string str with
   (* PATTERN MUST MATCH RETURN OF unencryptable_to_json !! *)
   | `Assoc [ ("master_password_hash", `String hash) ] ->
-      Some (MasterPasswordHash hash)
+      Some (MasterPasswordHash (Bcrypt.hash_of_string hash))
   | _ -> None
 
 let password_to_json ({ name; password } : password) : Yojson.Basic.t =

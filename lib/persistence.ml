@@ -26,12 +26,13 @@ module Make (Dirs : Directories) = struct
   let read_master_password_hash () =
     let lines = BatList.of_enum (BatFile.lines_of masterpwd_file_path) in
     let hash = BatList.hd lines in
-    hash
+    Bcrypt.hash_of_string hash
 
   let write_unencryptable master_value =
     match master_value with
     | Types.MasterPasswordHash hash ->
-        BatFile.write_lines masterpwd_file_path (BatList.enum [ hash ])
+        BatFile.write_lines masterpwd_file_path
+          (BatList.enum [ Bcrypt.string_of_hash hash ])
 
   let read_all_encryptable_seq () =
     Yojson.Basic.seq_from_file ~fname:encrypted_file_path encrypted_file_path

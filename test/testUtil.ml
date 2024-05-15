@@ -1,23 +1,21 @@
 open FinalProject.Types
 
-(** [nonempty_string lower upper] is an arbitrary string of length from [lower]
-    to [upper]. Requires that [upper >= lower], and [lower > 0]. *)
-let nonempty_string lower upper =
+let string_with_range lower upper =
   QCheck.string_of_size (QCheck.Gen.int_range lower upper)
 
 let password_arb =
   let open QCheck in
   map
     (fun (name, password) -> { name; password })
-    (pair (nonempty_string 10 30) (nonempty_string 20 50))
+    (pair (string_with_range 10 30) (string_with_range 20 50))
 
 let login_arb =
   let open QCheck in
   map
     (fun (name, username, password, url) -> { name; username; password; url })
-    (quad (nonempty_string 10 30) (nonempty_string 10 30)
-       (nonempty_string 20 50)
-       (option (nonempty_string 50 100)))
+    (quad (string_with_range 10 30) (string_with_range 10 30)
+       (string_with_range 20 50)
+       (option (string_with_range 50 100)))
 
 let rec delete_recursive dir_path =
   (* Implementation adapted from https://stackoverflow.com/a/56344603/13160488,
@@ -96,3 +94,7 @@ let conf_use_sequential_runner () =
       with Stdlib.Arg.Bad bad_message ->
         print_endline bad_message;
         raise (Stdlib.Arg.Bad bad_message)
+
+let equals_ignoring_duplicates lst1 lst2 =
+  lst1 |> List.for_all (fun x -> List.mem x lst2)
+  && lst2 |> List.for_all (fun x -> List.mem x lst2)

@@ -128,20 +128,20 @@ let set_pwd_procedure () =
   print_endline "Type a new password: ";
   let newpwd = get_hidden_input () in
   (* Salt & Hash -> Convert ot MasterPasswordHash type*)
-  let master_pwd = Encrypt.salt_hash newpwd in
-  let string_master_pwd = Types.string_of_unencryptable master_pwd in
-  let hashed_master_pwd =
-    MasterPassword.string_to_salted_hash string_master_pwd
-  in
-  let string_of_hashed_master = Bcrypt.string_of_hash hashed_master_pwd in
-
-  let unencrypt_master_pwd = Encrypt.salt_hash string_of_hashed_master in
-  let () = Persistence.write_unencryptable unencrypt_master_pwd in
+  MasterPassword.string_to_salted_hash newpwd |> Persistence.write_unencryptable;
   print_endline ("The password input was :" ^ newpwd)
+
+module StrengthCheck = StrengthCheck.Make (struct
+  let common_passwords_path = "data/10-million-combos-2.txt"
+end)
 
 let check_strength_procedure () =
   print_endline "Enter your existing password.";
   let existing = get_hidden_input () in
+  if not (StrengthCheck.is_initialized ()) then begin
+    print_endline "Loading weak passwords list...";
+    print_endline "Please wait a few moments."
+  end;
   if%lwt StrengthCheck.is_weak existing then
     Lwt.return
       (print_endline
@@ -152,6 +152,10 @@ let check_strength_procedure () =
 let health_check_procedure () =
   let open Batteries in
   let open Lwt in
+  if not (StrengthCheck.is_initialized ()) then begin
+    print_endline "Loading weak passwords list...";
+    print_endline "Please wait a few moments."
+  end;
   let%lwt weak_encryptables =
     Persistence.read_all_encryptable ()
     |> Lwt_list.filter_p (StrengthCheck.is_weak % Types.password_of_encryptable)
@@ -271,8 +275,6 @@ let main_incorrect_input_procedure input =
   else print_endline "That is not a valid command."
 
 let main_loop () =
-  print_endline "Loading...";
-  print_endline "Please wait a few moments.";
   Persistence.set_file_perms ();
   StrengthCheck.init_async ();
   let open PromptCommands in

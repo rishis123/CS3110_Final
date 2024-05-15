@@ -2,10 +2,7 @@
 (* [check_master pwd] returns whether or not the given [pwd] is the correct
    master password.contents *)
 
-val string_to_sha3_hash : string -> string
-(** [string_to_sha3_hash str] is the 256-bit SHA3 hash of [str]. *)
-
-val string_to_salted_hash : string -> Bcrypt.hash
+val string_to_salted_hash : string -> Types.unencryptable
 (** [string_to_salted_hash str] is the salted hash of [str]. *)
 
 val check_master_pwd : string -> bool

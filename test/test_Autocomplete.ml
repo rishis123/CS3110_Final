@@ -1,8 +1,7 @@
 open OUnit2
 open FinalProject
 
-let pick_10_in_common () =
-  BatEnum.take 10 (BatFile.lines_of "data/xato-net-10-million-passwords.txt")
+
 
 (* Makes a string of 3 to 10 random characters, any printable ASCII allowed*)
 let generate_random_string () =
@@ -35,40 +34,6 @@ let fake_autocomplete login_info_lst input_wd =
       login_info_lst
   in
   filter_lst
-
-(* NOTE -- THIS MOCKS Autocomplete.check_vulnerabilities function, without the
-   read encryptable*)
-let fake_check_vulner (pwd_list : Types.encryptable list) =
-  let open Lwt in
-  let get_only_passwords (pwd : Types.encryptable) =
-    match pwd with
-    | Types.Login l -> l.password
-    | Types.Password p -> p.password
-  in
-  let get_only_names (pwd : Types.encryptable) : string =
-    match pwd with
-    | Types.Login l -> l.name
-    | Types.Password p -> Types.string_of_master_password_hash p.name
-  in
-  let string_pwd_list = List.map get_only_passwords pwd_list in
-  (* let len = List.length string_pwd_list in *)
-
-  let%lwt weak_pwd_list = string_pwd_list |> Lwt_list.filter_p StrengthCheck.is_weak in
-  weak_pwd_list |> Lwt_list.mapi_p (fun i _ -> return (get_only_names (List.nth pwd_list i)))
-
-  (* let vulnerable = ref [] in
-
-  (* we just want to modify this one ref rather than return a new list for each
-     iteration of the loop*)
-  for i = 0 to len - 1 do
-    let password_entry = List.nth string_pwd_list i in
-    StrengthCheck.is_weak password_entry >>= (fun is_weak ->
-    if is_weak then
-      (* if the password is vulnerable, add the corresponding name to the
-         vulnerable list*)
-      vulnerable := get_only_names (List.nth pwd_list i) :: !vulnerable)
-  done;
-  !vulnerable *)
 
 let tests =
   [

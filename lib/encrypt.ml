@@ -8,9 +8,18 @@ let masterkey : string option ref = ref None
 
 let set_key key = masterkey := Some key
 
+(** [form_of_encryptable] determines if the encryptable is a login or a
+    password. *)
 let form_of_encryptable = function
   | Types.Login _ -> EncryptedLogin
   | Types.Password _ -> EncryptedPassword
+
+(** [string_to_sha3_hash str] is the 256-bit SHA3 hash of [str]. *)
+let string_to_sha3_hash str =
+  let hash_function = sha3 256 in
+  (* 256-bit SHA3 hash *)
+  hash_function#add_string str;
+  hash_function#result
 
 (** [transform direction target] is the ciphertext of [target] if [direction] is
     [Cipher.Encrypt], and is the plaintext of [target] if [direction] is
@@ -20,9 +29,7 @@ let transform direction target =
   match !masterkey with
   | None -> failwith "Masterkey not yet set!"
   | Some masterkey ->
-      let hash = sha256 () in
-      hash#add_string masterkey;
-      let key = hash#result in
+      let key = string_to_sha3_hash masterkey in
       (* key derivation of [masterkey] *)
       let transformer = aes ~pad:Padding.length key direction in
       transformer#put_string target;
@@ -61,5 +68,3 @@ let decrypt (EncryptedString { form; encrypted_data; _ }) =
   match form with
   | EncryptedPassword -> Types.Password (decrypt_password encrypted_data)
   | EncryptedLogin -> Types.Login (decrypt_login encrypted_data)
-
-let salt_hash pwd = Types.MasterPasswordHash pwd
