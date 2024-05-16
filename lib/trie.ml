@@ -8,7 +8,7 @@ type t = node OrderedMultiset.t
 (** The type of a trie that stores strings. AF:
     [node {value=c; children=s; is_terminal=b}] is the trie containing all
     strings beginning with [c] followed by any string contained in the subtree
-    rooted at each of its children. If [is_termina] is false, [children] is the
+    rooted at each of its children. If [is_terminal] is false, [children] is the
     set of all of a node's children. If [is_terminal] is true, then a node has
     no children regardless of the value of [children]. The [OrderedMultiset]
     containing only [None] is the empty trie. RI: None *)
