@@ -1,16 +1,10 @@
 type master_password_hash = Bcrypt.hash
-(** [master_password_hash] is the type of a hash of the master password, used
-    for checking validity at startup *)
-
-(** [unencryptable] is the type of any storable data that is not encrypted. *)
 type unencryptable = MasterPasswordHash of master_password_hash
 
 type password = {
   name : string;
   password : string;
 }
-(** [password] is the type of a simple named password. Note that the master
-    password is never represented as a [password], and is in fact never stored *)
 
 type login = {
   name : string;
@@ -18,32 +12,33 @@ type login = {
   password : string;
   url : string option;
 }
-(** [login] is the type of a login, which contains richer information than just
-    a password *)
 
-(** [encryptable] is the type of a possible secret that can be stored *)
 type encryptable =
   | Password of password
   | Login of login
 
-(** [name_of_encryptable entry] retrieves the name associated with [entry]. *)
+type encrypted_form =
+  | EncryptedLogin
+  | EncryptedPassword
+
+type encrypted =
+  | EncryptedString of {
+      form : encrypted_form;
+      name : string;
+      encrypted_data : string;
+    }
+
 let name_of_encryptable = function
   | Password { name; _ } -> name
   | Login { name; _ } -> name
 
-(** [password_of_encryptable entry] retrieves the secret password associated
-    with [entry]. *)
 let password_of_encryptable = function
   | Password { password; _ } -> password
   | Login { password; _ } -> password
 
-(** [string_of_password p] is a string representation of [p] for logging or
-    debugging. *)
 let string_of_password (p : password) : string =
   Printf.sprintf "P{ name = %s; password = %s }" p.name p.password
 
-(** [string_of_login l] is a string representation of [l] for logging or
-    debugging. *)
 let string_of_login (l : login) : string =
   match l.url with
   | None ->
@@ -53,32 +48,11 @@ let string_of_login (l : login) : string =
       Printf.sprintf "L{ name = %s; username = %s; password = %s; url = %s }"
         l.name l.username l.password url
 
-(** [string_of_encryptable e] is a string representation of [e] for logging or
-    debugging. *)
 let string_of_encryptable = function
   | Password p -> string_of_password p
   | Login l -> string_of_login l
 
-(** [string_of_master_password_hash h] is a string representation of [h] for
-    logging or debugging. *)
 let string_of_master_password_hash h : string = h
 
-(** [string_of_unencryptable u] is a string representation of [u] for logging or
-    debugging. *)
 let string_of_unencryptable = function
   | MasterPasswordHash h -> Bcrypt.string_of_hash h
-
-(** [encrypted_form] is the type indicating whether the encrypted data is a
-    login or a password. *)
-type encrypted_form =
-  | EncryptedLogin
-  | EncryptedPassword
-
-(** [encrypted] is the type that records all data and metadata associated with
-    the encrypted entry. *)
-type encrypted =
-  | EncryptedString of {
-      form : encrypted_form;
-      name : string;
-      encrypted_data : string;
-    }
