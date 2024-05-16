@@ -33,6 +33,7 @@ let gen_pwd_signal = W.empty ~w:0 ~h:0 ()
 let import_signal = W.empty ~w:0 ~h:0 ()
 let import_complete_signal = W.empty ~w:0 ~h:0 ()
 let export_signal = W.empty ~w:0 ~h:0 ()
+let findsing_signal = W.empty ~w:0 ~h:0 ()
 let export_complete_signal = W.empty ~w:0 ~h:0 ()
 let delete_signal = W.empty ~w:0 ~h:0 ()
 let delete_complete_signal = W.empty ~w:0 ~h:0 ()
@@ -130,7 +131,7 @@ let gen_pwd_view =
   let pwd_label = W.label ~size:label_text_size (get_pwd ()) in
   let special_char_btn =
     W.button ~kind:Button.Switch
-      ~label_on:(Label.create ~size:label_text_size "Special charaters: On")
+      ~label_on:(Label.create ~size:label_text_size "Special characters: On")
       ~label_off:(Label.create ~size:label_text_size "Special character: Off")
       ~action:(fun x ->
         if x then special_char_on := true else special_char_on := false)
@@ -159,6 +160,38 @@ let gen_pwd_view =
       L.resident ~w:window_width gen_again_btn;
       L.resident ~w:window_width back_btn;
     ]
+
+(** [findsing_view] is the view shown when the user wants to autocomplete their
+    password*)
+
+let findsing_view =
+  let length_label =
+    W.label ~size:label_text_size
+      "Enter what you think the name of your password or login is"
+  in
+  let desired_input = create_text_input "      " in
+  let search_btn =
+    create_btn "Search" (fun () ->
+        let desired = W.get_text desired_input in
+        let autocomplete : Types.encryptable list =
+          Autocomplete.autocomplete desired
+        in
+        if List.length autocomplete = 0 then
+          W.set_text length_label "No matches"
+        else
+          let items = List.map Types.string_of_encryptable autocomplete in
+          W.set_text length_label (String.concat "\n" items))
+  in
+  let content_layout =
+    L.tower
+      [
+        L.resident ~w:window_width length_label;
+        L.resident ~w:window_width desired_input;
+        L.resident ~w:window_width search_btn;
+      ]
+  in
+  let scrollable_layout = L.make_clip ~scrollbar:true ~h:500 content_layout in
+  scrollable_layout
 
 (** [add_view] is the view shown when the user adds a new password. *)
 let add_view =
@@ -340,6 +373,9 @@ let home_view =
   let gen_pwd_btn =
     create_btn "Generate a password" (fun () -> Update.push gen_pwd_signal)
   in
+  let find_sing_btn =
+    create_btn "Autocomplete password" (fun () -> Update.push findsing_signal)
+  in
   let set_master_pwd_btn =
     create_btn "Set the master password" (fun () ->
         Update.push master_pwd_change_signal)
@@ -357,6 +393,7 @@ let home_view =
       L.resident ~w:window_width delete_btn;
       L.resident ~w:window_width list_btn;
       L.resident ~w:window_width gen_pwd_btn;
+      L.resident ~w:window_width find_sing_btn;
       L.resident ~w:window_width set_master_pwd_btn;
       L.resident ~w:window_width import_btn;
       L.resident ~w:window_width export_btn;
@@ -411,6 +448,9 @@ let connections =
     create_mutation_connection list_signal list_view update_list_view
   in
   let gen_pwd_view_connection = create_connection gen_pwd_signal gen_pwd_view in
+  let findsing_view_connection =
+    create_connection findsing_signal findsing_view
+  in
   [
     create_connection login_signal home_view;
     create_connection add_signal add_view;
@@ -422,6 +462,7 @@ let connections =
       (action_complete_view "Master password set");
     create_connection master_pwd_change_signal set_master_pwd_view;
     gen_pwd_view_connection;
+    findsing_view_connection;
     create_connection import_signal import_view;
     create_connection import_complete_signal
       (action_complete_view "Import complete");
