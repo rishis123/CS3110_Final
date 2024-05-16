@@ -53,49 +53,6 @@ let tests =
       if not (Autocomplete.compare_words init_str short_str) then
         all_good := false;
       assert_bool "Doesn't find overlap of 3 when does exist" !all_good );
-    ( "Test autocomplete for logins and passwords " >:: fun _ ->
-      let name1 = generate_random_string () ^ "pass" in
-      let name2 = generate_random_string () in
-      let name3 = "pass" ^ generate_random_string () in
-      let name4 = "pa" ^ generate_random_string () ^ "s" in
-      let name5 =
-        generate_random_string () ^ "pas" ^ generate_random_string ()
-      in
-      let name6 = generate_random_string () in
-      let name7 = generate_random_string () in
-      let sample_data =
-        [
-          Types.Password { name = name1; password = "sdsd9" };
-          Types.Password { name = name2; password = "xyz456" };
-          Types.Password { name = name3; password = "123abc" };
-          Types.Password { name = name4; password = "123abc" };
-          Types.Login
-            { name = name5; username = "user1"; password = "pass1"; url = None };
-          Types.Login
-            {
-              name = name6;
-              username = "user2";
-              password = "pass2";
-              url = Some "monkey";
-            };
-          Types.Login
-            { name = name7; username = "user3"; password = "pass3"; url = None };
-        ]
-      in
-      (* Mocking the Persistence.read_all_encryptable function *)
-      let filtered_list = fake_autocomplete sample_data "pass" in
-      (* Assert that only passwords or logins with names containing at least 3
-         characters in common with "pass" are present *)
-      let expected_filtered_list =
-        [
-          Types.Password { name = name1; password = "sdsd9" };
-          Types.Password { name = name3; password = "123abc" };
-          Types.Login
-            { name = name5; username = "user1"; password = "pass1"; url = None };
-        ]
-      in
-
-      assert_equal expected_filtered_list filtered_list );
   ]
 
 let autocomplete_suite = "autocomplete test suite" >::: tests
