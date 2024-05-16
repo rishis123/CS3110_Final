@@ -161,38 +161,6 @@ let gen_pwd_view =
       L.resident ~w:window_width back_btn;
     ]
 
-(** [findsing_view] is the view shown when the user wants to autocomplete their
-    password*)
-
-let findsing_view =
-  let length_label =
-    W.label ~size:label_text_size
-      "Enter what you think the name of your password or login is"
-  in
-  let desired_input = create_text_input "      " in
-  let search_btn =
-    create_btn "Search" (fun () ->
-        let desired = W.get_text desired_input in
-        let autocomplete : Types.encryptable list =
-          Autocomplete.autocomplete desired
-        in
-        if List.length autocomplete = 0 then
-          W.set_text length_label "No matches"
-        else
-          let items = List.map Types.string_of_encryptable autocomplete in
-          W.set_text length_label (String.concat "\n" items))
-  in
-  let content_layout =
-    L.tower
-      [
-        L.resident ~w:window_width length_label;
-        L.resident ~w:window_width desired_input;
-        L.resident ~w:window_width search_btn;
-      ]
-  in
-  let scrollable_layout = L.make_clip ~scrollbar:true ~h:500 content_layout in
-  scrollable_layout
-
 (** [add_view] is the view shown when the user adds a new password. *)
 let add_view =
   let label =
@@ -333,6 +301,45 @@ let update_list_view () =
     L.tower [ scrollpane; L.resident ~w:window_width back_btn ]
   in
   list_view := new_list_view
+
+(** [findsing_view] is the view shown when the user wants to autocomplete their
+    password*)
+let findsing_view =
+  let length_label =
+    W.rich_text ~size:label_text_size ~h:40
+      Text_display.(
+        page
+          [ para "Enter what you think the name of your password or login is" ])
+  in
+  let desired_input = create_text_input "Password name" in
+  let scrollpane = L.empty ~w:window_width ~h:300 () in
+  let search_btn =
+    create_btn "Search" (fun () ->
+        let desired = W.get_text desired_input in
+        let autocomplete : Types.encryptable list =
+          Autocomplete.autocomplete desired
+        in
+        if List.length autocomplete = 0 then begin
+          W.set_text length_label "No matches";
+          L.set_rooms scrollpane [ L.empty ~w:window_width ~h:300 () ]
+        end
+        else
+          let items = List.map create_login_label autocomplete in
+          W.set_text length_label "Matches Found";
+          L.set_rooms scrollpane
+            [
+              L.make_clip ~scrollbar:true ~w:(window_width - 20) ~h:290
+                (L.tower items);
+            ])
+  in
+  L.tower
+    [
+      L.resident ~w:window_width length_label;
+      L.resident ~w:window_width desired_input;
+      scrollpane;
+      L.resident ~w:window_width search_btn;
+      L.resident ~w:window_width back_btn;
+    ]
 
 (** [delete_view] is the view shown when a login is deleted. *)
 let delete_view =
