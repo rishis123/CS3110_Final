@@ -1,8 +1,0 @@
-type,name,username,password,url
-Login,login1,user1,pwd1,
-Password,password1,,password1,
-Login,login1,user1,pwd1,
-Login,login2,user2@example.com,mysupersecurepassword1234#$%^&*()!#^¡™£¢∞§¶•ªºß√∫˜µ≤ˆ¥†®´∂√∫˜µπ¬…†®´∑œå≈†,
-Login,Login #3,u s e r ¢∞§¶•ªº \ asdf :-),cccccbhugivihtcefjgletbdrcuuinbbihblfhnvkdnt,domain.example.com
-Password,My Password!!,,super duper secregt!!!,
-Password,my password!!,,my password!!,

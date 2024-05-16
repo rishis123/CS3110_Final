@@ -64,9 +64,10 @@ let action_complete_view msg =
   L.tower
     [ L.resident ~w:window_width label; L.resident ~w:window_width back_btn ]
 
-(** [export_view] is the view shown when exporting passwords to a file. *)
-let export_view =
-  let path_input = create_text_input "Enter file path" in
+(** [ExportView] is the module with the gui elements for [export_view]. *)
+module ExportView = struct
+  let path_input = create_text_input "Enter file path"
+
   let export_btn =
     create_btn "Export" (fun () ->
         let path = W.get_text path_input in
@@ -74,22 +75,24 @@ let export_view =
         PasswordImport.export secrets path;
         W.set_text path_input "";
         Update.push export_complete_signal)
-  in
+
   let cancel_btn =
     create_btn "Cancel" (fun () ->
         W.set_text path_input "";
         Update.push back_home_signal)
-  in
-  L.tower
-    [
-      L.resident ~w:window_width path_input;
-      L.resident ~w:window_width export_btn;
-      L.resident ~w:window_width cancel_btn;
-    ]
+end
 
-(** [import_view] is the view shown when importing passwords from a file. *)
-let import_view =
-  let path_input = create_text_input "Enter file path" in
+(** [export_view] is the view shown when exporting passwords to a file. *)
+let export_view =
+  L.tower
+    (List.map
+       (L.resident ~w:window_width)
+       [ ExportView.path_input; ExportView.export_btn; ExportView.cancel_btn ])
+
+(** [ImportView] is the module with gui elements for [import_view]. *)
+module ImportView = struct
+  let path_input = create_text_input "Enter file path"
+
   let import_btn =
     create_btn "Import" (fun () ->
         let path = W.get_text path_input in
@@ -97,38 +100,41 @@ let import_view =
         new_secrets |> List.iter Persistence.write_encryptable;
         W.set_text path_input "";
         Update.push import_complete_signal)
-  in
+
   let cancel_btn =
     create_btn "Cancel" (fun () ->
         W.set_text path_input "";
         Update.push back_home_signal)
-  in
+end
+
+(** [import_view] is the view shown when importing passwords from a file. *)
+let import_view =
   L.tower
-    [
-      L.resident ~w:window_width path_input;
-      L.resident ~w:window_width import_btn;
-      L.resident ~w:window_width cancel_btn;
-    ]
+    (List.map
+       (L.resident ~w:window_width)
+       [ ImportView.path_input; ImportView.import_btn; ImportView.cancel_btn ])
 
-(** [!special_char_on] is whether to include special characters in the generated
-    password. *)
-let special_char_on = ref true
+(** [GenPwdView] is the module with gui elements and state variables for
+    [gen_pwd_view]. *)
+module GenPwdView = struct
+  (** [!special_char_on] is whether to include special characters in the
+      generated password. *)
+  let special_char_on = ref true
 
-(** [pwd_length] is the length of the password to generate. *)
-let pwd_length = ref 12
+  (** [pwd_length] is the length of the password to generate. *)
+  let pwd_length = ref 12
 
-(** [get_pwd ()] generates a password with [!pwd_length] and includes special
-    characters if [!special_char_on] is true. *)
-let get_pwd () =
-  if !special_char_on then
-    GenPassword.generate_password_with_special !pwd_length
-  else GenPassword.generate_password_without_special !pwd_length
+  (** [get_pwd ()] generates a password with [!pwd_length] and includes special
+      characters if [!special_char_on] is true. *)
+  let get_pwd () =
+    if !special_char_on then
+      GenPassword.generate_password_with_special !pwd_length
+    else GenPassword.generate_password_without_special !pwd_length
 
-(** [gen_pwd_view] is the view shown when the user generates a new password *)
-let gen_pwd_view =
-  let length_label = W.label ~size:label_text_size "Password length: " in
-  let length_input = create_text_input "      " in
-  let pwd_label = W.label ~size:label_text_size (get_pwd ()) in
+  let length_label = W.label ~size:label_text_size "Password length: "
+  let length_input = create_text_input "      "
+  let pwd_label = W.label ~size:label_text_size (get_pwd ())
+
   let special_char_btn =
     W.button ~kind:Button.Switch
       ~label_on:(Label.create ~size:label_text_size "Special characters: On")
@@ -136,7 +142,7 @@ let gen_pwd_view =
       ~action:(fun x ->
         if x then special_char_on := true else special_char_on := false)
       ~state:!special_char_on ""
-  in
+
   let gen_again_btn =
     create_btn "Generate again" (fun () ->
         let new_len =
@@ -147,22 +153,25 @@ let gen_pwd_view =
         W.set_text length_input (string_of_int new_len);
         pwd_length := new_len;
         W.set_text pwd_label (get_pwd ()))
-  in
+end
+
+(** [gen_pwd_view] is the view shown when the user generates a new password *)
+let gen_pwd_view =
   L.tower
     [
-      L.resident ~w:window_width pwd_label;
-      L.resident ~w:window_width special_char_btn;
+      L.resident ~w:window_width GenPwdView.pwd_label;
+      L.resident ~w:window_width GenPwdView.special_char_btn;
       L.flat
         [
-          L.resident ~w:(window_width / 2) length_label;
-          L.resident ~w:(window_width / 2) length_input;
+          L.resident ~w:(window_width / 2) GenPwdView.length_label;
+          L.resident ~w:(window_width / 2) GenPwdView.length_input;
         ];
-      L.resident ~w:window_width gen_again_btn;
+      L.resident ~w:window_width GenPwdView.gen_again_btn;
       L.resident ~w:window_width back_btn;
     ]
 
-(** [add_view] is the view shown when the user adds a new password. *)
-let add_view =
+(** [AddView] is a module with the gui elements for [addview]*)
+module AddView = struct
   let label =
     W.rich_text ~size:label_text_size ~h:label_height
       Text_display.(
@@ -173,13 +182,14 @@ let add_view =
               "The name and password fields must be filled. If the url field \
                is filled, the username field must be filled. ";
           ])
-  in
-  let name_input = create_text_input "Enter name" in
-  let pwd_input = create_text_input "Enter password" in
-  let username_input = create_text_input "Enter username" in
-  let url_input = create_text_input "Enter url" in
-  let not_empty s = String.length s > 0 in
-  let is_empty s = s = String.empty in
+
+  let name_input = create_text_input "Enter name"
+  let pwd_input = create_text_input "Enter password"
+  let username_input = create_text_input "Enter username"
+  let url_input = create_text_input "Enter url"
+  let not_empty s = String.length s > 0
+  let is_empty s = s = String.empty
+
   let write_and_update encryptable =
     Persistence.write_encryptable encryptable;
     W.set_text name_input "";
@@ -187,7 +197,7 @@ let add_view =
     W.set_text pwd_input "";
     W.set_text url_input "";
     Update.push add_complete_signal
-  in
+
   let add_btn =
     create_btn "Add password" (fun () ->
         let name = W.get_text name_input in
@@ -208,28 +218,32 @@ let add_view =
           not_empty name && not_empty pwd && is_empty username && is_empty url
         then write_and_update (Types.Password { name; password = pwd })
         else ignore ())
-  in
+
   let cancel_btn =
     create_btn "Cancel" (fun () ->
         W.set_text name_input "";
         W.set_text pwd_input "";
         Update.push back_home_signal)
-  in
+end
+
+(** [add_view] is the view shown when the user adds a new password. *)
+let add_view =
   L.tower
     [
-      L.resident ~w:window_width name_input;
-      L.resident ~w:window_width username_input;
-      L.resident ~w:window_width pwd_input;
-      L.resident ~w:window_width url_input;
-      L.resident ~w:window_width add_btn;
-      L.resident ~w:window_width cancel_btn;
-      L.resident ~w:window_width ~h:label_height label;
+      L.resident ~w:window_width AddView.name_input;
+      L.resident ~w:window_width AddView.username_input;
+      L.resident ~w:window_width AddView.pwd_input;
+      L.resident ~w:window_width AddView.url_input;
+      L.resident ~w:window_width AddView.add_btn;
+      L.resident ~w:window_width AddView.cancel_btn;
+      L.resident ~w:window_width ~h:label_height AddView.label;
     ]
 
-(** [set_master_pwd_view] is the view shown when the uset sets the master
-    password. *)
-let set_master_pwd_view =
-  let pwd_input = create_text_input "Enter new password" in
+(** [SetMasterPwdView] is the module with gui elements for
+    [set_master_pwd_view]. *)
+module SetMasterPwdView = struct
+  let pwd_input = create_text_input "Enter new password"
+
   let set_btn =
     create_btn "Set master password" (fun () ->
         let newpwd = W.get_text pwd_input in
@@ -238,81 +252,90 @@ let set_master_pwd_view =
         |> Persistence.write_unencryptable;
         W.set_text pwd_input "";
         Update.push master_pwd_change_complete_signal)
-  in
+
   let label =
     W.rich_text ~size:label_text_size ~h:label_height
       Text_display.(
         page [ para ""; para "Delete a password or login based on its name." ])
-  in
-  let cancel_btn =
-    create_btn "Cancel" (fun () -> Update.push back_home_signal)
-  in
+
+  let cancel_btn = create_btn "Cancel" (fun () -> Update.push back_home_signal)
+end
+
+(** [set_master_pwd_view] is the view shown when the uset sets the master
+    password. *)
+let set_master_pwd_view =
   L.tower
     [
-      L.resident ~w:window_width pwd_input;
-      L.resident ~w:window_width set_btn;
-      L.resident ~w:window_width cancel_btn;
-      L.resident ~w:window_width ~h:label_height label;
+      L.resident ~w:window_width SetMasterPwdView.pwd_input;
+      L.resident ~w:window_width SetMasterPwdView.set_btn;
+      L.resident ~w:window_width SetMasterPwdView.cancel_btn;
+      L.resident ~w:window_width ~h:label_height SetMasterPwdView.label;
     ]
 
 (** [!list_view] is the view shown when the user lists all passwords. *)
 let list_view = ref (L.empty ~w:window_width ~h:600 ())
 
-(** [create_login_label_resident name data] creates a resident layout for a
-    field of a login's data, with [name] as the name of the field and [data] as
-    the login's information. *)
-let create_login_label_resident name data =
-  let h = 50 in
-  L.resident ~w:window_width
-    (W.rich_text ~size:label_text_size ~h
-       Text_display.(page [ bold (para name); para data ]))
+(** [ListView] is the module with gui elements and the update function for
+    [list_view]. *)
+module ListView = struct
+  (** [create_login_label_resident name data] creates a resident layout for a
+      field of a login's data, with [name] as the name of the field and [data]
+      as the login's information. *)
+  let create_login_label_resident name data =
+    let h = 50 in
+    L.resident ~w:window_width
+      (W.rich_text ~size:label_text_size ~h
+         Text_display.(page [ bold (para name); para data ]))
 
-(** [create_login_label data] creates a resident layout with all of a login's
-    data, to be displayed in [list_view]. *)
-let create_login_label data =
-  match data with
-  | Types.Password p ->
-      L.tower
-        [
-          create_login_label_resident "Name: " p.name;
-          create_login_label_resident "Password: " p.password;
-        ]
-  | Types.Login l -> (
-      let fields =
-        [
-          create_login_label_resident "Name: " l.name;
-          create_login_label_resident "Username: " l.username;
-          create_login_label_resident "Password: " l.password;
-        ]
+  (** [create_login_label data] creates a resident layout with all of a login's
+      data, to be displayed in [list_view]. *)
+  let create_login_label data =
+    match data with
+    | Types.Password p ->
+        L.tower
+          [
+            create_login_label_resident "Name: " p.name;
+            create_login_label_resident "Password: " p.password;
+          ]
+    | Types.Login l -> (
+        let fields =
+          [
+            create_login_label_resident "Name: " l.name;
+            create_login_label_resident "Username: " l.username;
+            create_login_label_resident "Password: " l.password;
+          ]
+        in
+        match l.url with
+        | None -> L.tower fields
+        | Some url ->
+            L.tower (fields @ [ create_login_label_resident "Url: " url ]))
+
+  (** [update_list_view ()] updates [list_view] so that changes made to the
+      logins are displayed. In other words, list view updates if changes are
+      made to the data. *)
+  let update_list_view () =
+    let new_list_view =
+      let pwd_list = Persistence.read_all_encryptable () in
+      let label_list = List.map create_login_label pwd_list in
+      let scrollpane =
+        L.make_clip ~scrollbar:true ~h:500 (L.tower label_list)
       in
-      match l.url with
-      | None -> L.tower fields
-      | Some url ->
-          L.tower (fields @ [ create_login_label_resident "Url: " url ]))
+      L.tower [ scrollpane; L.resident ~w:window_width back_btn ]
+    in
+    list_view := new_list_view
+end
 
-(** [update_list_view ()] updates [list_view] so that changes made to the logins
-    are displayed. In other words, list view updates if changes are made to the
-    data. *)
-let update_list_view () =
-  let new_list_view =
-    let pwd_list = Persistence.read_all_encryptable () in
-    let label_list = List.map create_login_label pwd_list in
-    let scrollpane = L.make_clip ~scrollbar:true ~h:500 (L.tower label_list) in
-    L.tower [ scrollpane; L.resident ~w:window_width back_btn ]
-  in
-  list_view := new_list_view
-
-(** [findsing_view] is the view shown when the user wants to autocomplete their
-    password*)
-let findsing_view =
+(** [FindsingView] is the module with gui elements for [findsing_view]. *)
+module FindsingView = struct
   let length_label =
     W.rich_text ~size:label_text_size ~h:40
       Text_display.(
         page
           [ para "Enter what you think the name of your password or login is" ])
-  in
-  let desired_input = create_text_input "Password name" in
-  let scrollpane = L.empty ~w:window_width ~h:300 () in
+
+  let desired_input = create_text_input "Password name"
+  let scrollpane = L.empty ~w:window_width ~h:300 ()
+
   let search_btn =
     create_btn "Search" (fun () ->
         let desired = W.get_text desired_input in
@@ -324,92 +347,104 @@ let findsing_view =
           L.set_rooms scrollpane [ L.empty ~w:window_width ~h:300 () ]
         end
         else
-          let items = List.map create_login_label autocomplete in
+          let items = List.map ListView.create_login_label autocomplete in
           W.set_text length_label "Matches Found";
           L.set_rooms scrollpane
             [
               L.make_clip ~scrollbar:true ~w:(window_width - 20) ~h:290
                 (L.tower items);
             ])
-  in
+end
+
+(** [findsing_view] is the view shown when the user wants to autocomplete their
+    password*)
+let findsing_view =
   L.tower
     [
-      L.resident ~w:window_width length_label;
-      L.resident ~w:window_width desired_input;
-      scrollpane;
-      L.resident ~w:window_width search_btn;
+      L.resident ~w:window_width FindsingView.length_label;
+      L.resident ~w:window_width FindsingView.desired_input;
+      FindsingView.scrollpane;
+      L.resident ~w:window_width FindsingView.search_btn;
       L.resident ~w:window_width back_btn;
     ]
 
-(** [delete_view] is the view shown when a login is deleted. *)
-let delete_view =
-  let input = create_text_input "Enter name" in
+(** [DeleteView] is the module with gui elements for [delete_view]. *)
+module DeleteView = struct
+  let input = create_text_input "Enter name"
+
   let delete_btn =
     create_btn "Delete" (fun () ->
         let name = W.get_text input in
         W.set_text input "";
         Persistence.delete_encryptable_by_name name;
         Update.push delete_complete_signal)
-  in
+
   let label =
     W.label ~size:label_text_size "Delete a password or login based on its name"
-  in
+
   let cancel_btn =
     create_btn "Cancel" (fun () ->
         W.set_text input "";
         Update.push back_home_signal)
-  in
+end
+
+(** [delete_view] is the view shown when a login is deleted. *)
+let delete_view =
   L.tower
     [
-      L.resident ~w:window_width input;
-      L.resident ~w:window_width delete_btn;
-      L.resident ~w:window_width cancel_btn;
-      L.resident ~w:window_width ~h:label_height label;
+      L.resident ~w:window_width DeleteView.input;
+      L.resident ~w:window_width DeleteView.delete_btn;
+      L.resident ~w:window_width DeleteView.cancel_btn;
+      L.resident ~w:window_width ~h:label_height DeleteView.label;
     ]
 
-(** [home_view] is the view shown right after the user logs in. *)
-let home_view =
-  let label = W.label ~size:label_text_size "You are signed in!" in
-  let add_btn =
-    create_btn "Add a password" (fun () -> Update.push add_signal)
-  in
+(** [HomeView] is the module with gui elements for [home_view]. *)
+module HomeView = struct
+  let label = W.label ~size:label_text_size "You are signed in!"
+  let add_btn = create_btn "Add a password" (fun () -> Update.push add_signal)
+
   let delete_btn =
     create_btn "Delete a password" (fun () -> Update.push delete_signal)
-  in
-  let list_btn = create_btn "List logins" (fun () -> Update.push list_signal) in
+
+  let list_btn = create_btn "List logins" (fun () -> Update.push list_signal)
+
   let gen_pwd_btn =
     create_btn "Generate a password" (fun () -> Update.push gen_pwd_signal)
-  in
+
   let find_sing_btn =
     create_btn "Autocomplete password" (fun () -> Update.push findsing_signal)
-  in
+
   let set_master_pwd_btn =
     create_btn "Set the master password" (fun () ->
         Update.push master_pwd_change_signal)
-  in
+
   let import_btn =
     create_btn "Import passwords" (fun () -> Update.push import_signal)
-  in
+
   let export_btn =
     create_btn "Export passwords" (fun () -> Update.push export_signal)
-  in
+end
+
+(** [home_view] is the view shown right after the user logs in. *)
+let home_view =
   L.tower
     [
-      L.resident ~w:window_width ~h:label_height label;
-      L.resident ~w:window_width add_btn;
-      L.resident ~w:window_width delete_btn;
-      L.resident ~w:window_width list_btn;
-      L.resident ~w:window_width gen_pwd_btn;
-      L.resident ~w:window_width find_sing_btn;
-      L.resident ~w:window_width set_master_pwd_btn;
-      L.resident ~w:window_width import_btn;
-      L.resident ~w:window_width export_btn;
+      L.resident ~w:window_width ~h:label_height HomeView.label;
+      L.resident ~w:window_width HomeView.add_btn;
+      L.resident ~w:window_width HomeView.delete_btn;
+      L.resident ~w:window_width HomeView.list_btn;
+      L.resident ~w:window_width HomeView.gen_pwd_btn;
+      L.resident ~w:window_width HomeView.find_sing_btn;
+      L.resident ~w:window_width HomeView.set_master_pwd_btn;
+      L.resident ~w:window_width HomeView.import_btn;
+      L.resident ~w:window_width HomeView.export_btn;
     ]
 
-(** [login_view] is the view shown before the user logs in *)
-let login_view =
-  let input = create_text_input "Enter master password" in
-  let label = W.label ~size:label_text_size "Hello! Please log in." in
+(** [LoginView] is the module with gui elements for [login_view]. *)
+module LoginView = struct
+  let input = create_text_input "Enter master password"
+  let label = W.label ~size:label_text_size "Hello! Please log in."
+
   let login_btn =
     create_btn "Login" (fun () ->
         let pwd = W.get_text input in
@@ -418,12 +453,15 @@ let login_view =
           let () = Encrypt.set_key pwd in
           Update.push login_signal
         else W.set_text label "Password incorrect")
-  in
+end
+
+(** [login_view] is the view shown before the user logs in *)
+let login_view =
   L.tower
     [
-      L.resident ~w:window_width input;
-      L.resident ~w:window_width login_btn;
-      L.resident ~w:window_width ~h:label_height label;
+      L.resident ~w:window_width LoginView.input;
+      L.resident ~w:window_width LoginView.login_btn;
+      L.resident ~w:window_width ~h:label_height LoginView.label;
     ]
 
 (** [master_layout] is the layout which is displayed in the window*)
@@ -438,6 +476,9 @@ let create_connection signal new_view =
       Sync.push (fun () -> L.fit_content ~sep:0 master_layout))
     [ Trigger.update ]
 
+(** [create_mutation_connection] creates a connection such that when
+    [Update.push signal] is called the given [view_ref] is mutated with
+    [update_fun]. *)
 let create_mutation_connection signal view_ref update_fun =
   W.connect_main signal signal
     (fun _ _ _ ->
@@ -452,7 +493,7 @@ let connections =
   (* This connection not only changes the view but also causes the listview to
      update with new changes made since the last time the listview was shown. *)
   let list_view_connection =
-    create_mutation_connection list_signal list_view update_list_view
+    create_mutation_connection list_signal list_view ListView.update_list_view
   in
   let gen_pwd_view_connection = create_connection gen_pwd_signal gen_pwd_view in
   let findsing_view_connection =
